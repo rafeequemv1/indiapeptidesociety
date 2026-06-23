@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Membership | Indian Peptide Society</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="description" content="Sign up or sign in to the Indian Peptide Society membership portal." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div id="top-bar-mount"></div>
+    <div id="header-mount"></div>
+
+    <main>
+      <section class="page-hero page-hero--membership">
+        <div class="container">
+          <h1 class="page-hero__title">Sign Up</h1>
+          <p class="page-hero__sub">Indian Peptide Society Membership</p>
+        </div>
+      </section>
+
+      <section class="section membership-page">
+        <div class="container membership-page__grid">
+          <div class="membership-card">
+            <div class="membership-card__head">
+              <h2>New Members</h2>
+              <p>Sign Up</p>
+            </div>
+            <div class="membership-card__body">
+              <div class="maintenance-notice">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <p>
+                  Our Membership service has been temporarily paused as our website is under maintenance and we will resume our services from
+                  <strong>May 01, 2025</strong>.
+                </p>
+              </div>
+              <button type="button" class="btn btn--primary btn--full" disabled>Sign Up</button>
+            </div>
+          </div>
+
+          <div class="membership-card" id="signin">
+            <div class="membership-card__head membership-card__head--navy">
+              <h2>Existing Members</h2>
+              <p>Sign In</p>
+            </div>
+            <div class="membership-card__body">
+              <form id="signin-form" class="contact-form contact-form--plain">
+                <div class="form-group">
+                  <label for="signin-email">Email</label>
+                  <input id="signin-email" name="email" type="email" required />
+                </div>
+                <div class="form-group">
+                  <label for="signin-password">Password</label>
+                  <input id="signin-password" name="password" type="password" required />
+                </div>
+                <button type="submit" class="btn btn--primary btn--full">Sign In</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="footer-mount"></div>
+    <script type="module" src="/src/membership.ts"></script>
+  </body>
+</html>

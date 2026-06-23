@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Events | Indian Peptide Society</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div id="top-bar-mount"></div>
+    <div id="header-mount"></div>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-hero__title">Events</h1>
+          <p class="page-hero__sub">Symposia &amp; Student Programmes</p>
+        </div>
+      </section>
+
+      <section class="section events-page section--cream">
+        <div class="container">
+          <div class="members-tabs" role="tablist">
+            <button type="button" class="members-tabs__btn is-active" data-tab="upcoming" role="tab" aria-selected="true">Upcoming Symposia</button>
+            <button type="button" class="members-tabs__btn" data-tab="past" role="tab" aria-selected="false">Past Symposia</button>
+            <button type="button" class="members-tabs__btn" data-tab="student" role="tab" aria-selected="false">Past Student Symposia</button>
+          </div>
+
+          <div id="panel-upcoming" role="tabpanel">
+            <div id="upcoming-grid" class="events-grid"></div>
+          </div>
+          <div id="panel-past" role="tabpanel" hidden>
+            <div id="past-grid" class="events-grid"></div>
+          </div>
+          <div id="panel-student" role="tabpanel" hidden>
+            <div id="student-grid" class="events-grid"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="footer-mount"></div>
+    <script type="module" src="/src/events.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Us | Indian Peptide Society</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div id="top-bar-mount"></div>
+    <div id="header-mount"></div>
+
+    <main>
+      <section class="page-hero page-hero--membership">
+        <div class="container">
+          <h1 class="page-hero__title">Contact Us</h1>
+          <p class="page-hero__sub">Keep in touch</p>
+        </div>
+      </section>
+
+      <section class="section contact-page">
+        <div class="container contact-page__grid">
+          <div class="contact-page__form">
+            <form id="contact-form" class="contact-form">
+              <div class="form-group">
+                <label for="name">Your name</label>
+                <input id="name" name="name" type="text" required />
+              </div>
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" required />
+              </div>
+              <div class="form-group">
+                <label for="phone">Phone</label>
+                <input id="phone" name="phone" type="tel" />
+              </div>
+              <div class="form-group">
+                <label for="message">Message</label>
+                <textarea id="message" name="message" rows="4" required></textarea>
+              </div>
+              <button type="submit" class="btn btn--primary btn--full">Submit</button>
+            </form>
+            <div id="contact-success" class="contact-success" hidden>
+              <p class="contact-success__title">Thank you for your message!</p>
+              <p>We will get back to you shortly.</p>
+            </div>
+          </div>
+
+          <aside class="contact-page__info">
+            <h2>Get in Touch</h2>
+            <div class="contact-info-card">
+              <p><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Jawahar Lal Nehru Centre for Advanced Scientific Research P.O. Jakkur, Bengaluru – 560064</p>
+              <p><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Indian Peptide Society 824/3, Sukhdev Nagar Kotla Mubarakpur New Delhi – 110003</p>
+              <a href="tel:+01124636224"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> +011 24636224</a>
+              <a href="mailto:indianpeptidesociety@gmail.com"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> indianpeptidesociety@gmail.com</a>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <div id="footer-mount"></div>
+    <script type="module" src="/src/contact.ts"></script>
+  </body>
+</html>

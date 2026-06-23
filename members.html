@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Members | Indian Peptide Society</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="description" content="Browse the Indian Peptide Society member directory and founder members." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div id="top-bar-mount"></div>
+    <div id="header-mount"></div>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-hero__title">Members</h1>
+        </div>
+      </section>
+
+      <section class="section members-page section--cream">
+        <div class="container">
+          <div class="members-tabs" role="tablist" aria-label="Member categories">
+            <button type="button" class="members-tabs__btn is-active" data-tab="directory" role="tab" aria-selected="true">Directory of Members</button>
+            <button type="button" class="members-tabs__btn" data-tab="founders" role="tab" aria-selected="false">Founder Members</button>
+          </div>
+
+          <div id="panel-directory" role="tabpanel">
+            <div class="members-toolbar">
+              <div class="search-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input id="member-search" type="search" placeholder="Search members..." aria-label="Search members" />
+              </div>
+            </div>
+            <div id="directory-grid" class="people-grid"></div>
+            <div class="members-pagination">
+              <p id="results-text" class="members-pagination__info"></p>
+              <button type="button" id="next-page" class="btn btn--outline">Next »</button>
+            </div>
+          </div>
+
+          <div id="panel-founders" role="tabpanel" hidden>
+            <div class="section-header section-header--left">
+              <h2 class="heading-md">Founder Members</h2>
+              <div class="section-line section-line--left"></div>
+            </div>
+            <div id="founders-grid" class="people-grid people-grid--founders"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="footer-mount"></div>
+    <script type="module" src="/src/members.ts"></script>
+  </body>
+</html>

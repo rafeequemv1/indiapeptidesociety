@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard | Indian Peptide Society</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/dashboard.css" />
+  </head>
+  <body class="dashboard-body">
+    <header class="dashboard-top">
+      <div class="dashboard-top__inner">
+        <a href="/index.html" class="dashboard-top__brand">
+          <img src="/images/ips-logo.png" alt="IPS" class="dashboard-top__logo" />
+          <span>Dashboard</span>
+        </a>
+        <div class="dashboard-top__actions">
+          <a href="/index.html" class="dashboard-top__link">View site</a>
+          <button type="button" class="btn btn--ghost" id="btn-reset">Reset</button>
+          <button type="button" class="btn btn--primary" id="btn-save">Save</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="dashboard-layout">
+      <nav class="dashboard-list" id="dashboard-nav" aria-label="Manage content"></nav>
+
+      <div class="dashboard-main">
+        <nav class="dashboard-main__breadcrumb" id="breadcrumb" aria-label="Breadcrumb"></nav>
+        <div class="dashboard-main__panel" id="dashboard-panel"></div>
+        <p class="dashboard-main__status" id="save-status" role="status"></p>
+      </div>
+    </div>
+
+    <div class="dash-modal" id="dash-modal" hidden>
+      <div class="dash-modal__backdrop" data-modal-close></div>
+      <div class="dash-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="dash-modal-title">
+        <div class="dash-modal__header">
+          <h3 class="dash-modal__title" id="dash-modal-title"></h3>
+          <button type="button" class="dash-modal__close" data-modal-close aria-label="Close">&times;</button>
+        </div>
+        <form class="dash-modal__form dash-fields" id="dash-modal-form"></form>
+        <div class="dash-modal__footer">
+          <button type="button" class="btn btn--ghost" data-modal-close>Cancel</button>
+          <button type="button" class="btn btn--primary" id="dash-modal-save">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/dashboard.ts"></script>
+  </body>
+</html>
