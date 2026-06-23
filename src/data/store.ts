@@ -5,6 +5,7 @@ export interface Announcement {
   coordinator: string;
   cta: string;
   ctaUrl: string;
+  showCtaButton: boolean;
   ticker: string;
 }
 
@@ -94,6 +95,7 @@ export const defaultContent: SiteContent = {
     coordinator: "Prof. Sharad Gupta",
     cta: "Stay tuned for updates.",
     ctaUrl: "",
+    showCtaButton: false,
     ticker: "The 11th Indian Peptide Symposium will be held from 25–27 February 2027 at IIT Gandhinagar, Gujarat: Stay tuned!",
   },
   news: [
@@ -225,7 +227,11 @@ function normalizeContent(parsed: Partial<SiteContent>): SiteContent {
   const merged: SiteContent = {
     ...base,
     ...parsed,
-    announcement: { ...base.announcement, ...parsed.announcement },
+    announcement: {
+      ...base.announcement,
+      ...parsed.announcement,
+      showCtaButton: parsed.announcement?.showCtaButton ?? Boolean(parsed.announcement?.ctaUrl),
+    },
     news: (parsed.news ?? base.news).map((item, i) => ({
       ...base.news[i],
       ...item,

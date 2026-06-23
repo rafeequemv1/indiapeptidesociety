@@ -28,7 +28,86 @@ interface FormField {
   key: string;
   label: string;
   multiline?: boolean;
-  type?: "text" | "number";
+  type?: "text" | "number" | "date" | "month" | "url" | "checkbox";
+  hint?: string;
+  group?: string;
+}
+
+function toIsoDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function parseDateRange(dates: string): { start: string; end: string } {
+  if (!dates.trim()) return { start: "", end: "" };
+  if (/^\d{4}-\d{2}-\d{2}/.test(dates)) {
+    const parts = dates.split(/\s*[–—-]\s*/);
+    const start = parts[0]?.trim() ?? "";
+    const end = parts[1]?.trim() || start;
+    return { start, end };
+  }
+  const range = dates.match(/(\w+)\s+(\d{1,2})(?:[–—-](\d{1,2}))?,?\s*(\d{4})/);
+  if (range) {
+    const start = new Date(`${range[1]} ${range[2]}, ${range[4]}`);
+    const endDay = range[3] ?? range[2];
+    const end = new Date(`${range[1]} ${endDay}, ${range[4]}`);
+    if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+      return { start: toIsoDate(start), end: toIsoDate(end) };
+    }
+  }
+  const single = new Date(dates);
+  if (!isNaN(single.getTime())) {
+    const iso = toIsoDate(single);
+    return { start: iso, end: iso };
+  }
+  if (/^\d{4}$/.test(dates.trim())) {
+    return { start: `${dates.trim()}-01-01`, end: `${dates.trim()}-12-31` };
+  }
+  return { start: "", end: "" };
+}
+
+function formatDateRange(start: string, end: string): string {
+  if (!start) return "";
+  const s = new Date(`${start}T12:00:00`);
+  const fmt = (d: Date, opts: Intl.DateTimeFormatOptions) =>
+    d.toLocaleDateString("en-US", opts);
+  if (!end || end === start) {
+    return fmt(s, { month: "long", day: "numeric", year: "numeric" });
+  }
+  const e = new Date(`${end}T12:00:00`);
+  if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
+    return `${fmt(s, { month: "long" })} ${s.getDate()}–${e.getDate()}, ${s.getFullYear()}`;
+  }
+  return `${fmt(s, { month: "long", day: "numeric", year: "numeric" })} – ${fmt(e, { month: "long", day: "numeric", year: "numeric" })}`;
+}
+
+function parseNewsMonth(display: string): string {
+  if (!display.trim()) return "";
+  if (/^\d{4}-\d{2}$/.test(display)) return display;
+  if (display.toLowerCase() === "latest") return "";
+  const parsed = new Date(display);
+  if (!isNaN(parsed.getTime())) {
+    return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}`;
+  }
+  const m = display.match(/(\w+)\s*(\d{4})/);
+  if (m) {
+    const d = new Date(`${m[1]} 1, ${m[2]}`);
+    if (!isNaN(d.getTime())) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    }
+  }
+  if (/^\d{4}$/.test(display.trim())) return `${display.trim()}-01`;
+  return "";
+}
+
+function formatNewsMonth(monthIso: string): string {
+  if (!monthIso) return "";
+  const [y, m] = monthIso.split("-");
+  const d = new Date(Number(y), Number(m) - 1, 1);
+  if (isNaN(d.getTime())) return monthIso;
+  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
 
 const NAV: NavItem[] = [
@@ -61,6 +140,22 @@ function esc(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 }
 
+const EDIT_ICON = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+
+function panelHead(title: string, desc: string, addLabel?: string): string {
+  const addBtn = addLabel
+    ? `<button type="button" class="btn btn--primary btn--sm dash-add" data-add>${addLabel}</button>`
+    : "";
+  return `
+    <div class="dash-panel__head">
+      <div class="dash-panel__intro">
+        <h2 class="dash-panel__title">${title}</h2>
+        <p class="dash-panel__desc">${desc}</p>
+      </div>
+      ${addBtn}
+    </div>`;
+}
+
 function listRow(title: string, meta: string, index: number, canReorder: boolean): string {
   const reorder = canReorder
     ? `<button type="button" data-move="up" data-index="${index}" aria-label="Move up">↑</button>
@@ -74,7 +169,7 @@ function listRow(title: string, meta: string, index: number, canReorder: boolean
       </div>
       <div class="dash-row__actions">
         ${reorder}
-        <button type="button" class="dash-edit" data-edit="${index}">Edit</button>
+        <button type="button" class="dash-edit" data-edit="${index}">${EDIT_ICON}<span>Edit</span></button>
         ${canReorder ? `<button type="button" class="dash-delete" data-delete="${index}">Delete</button>` : ""}
       </div>
     </div>`;
@@ -84,8 +179,7 @@ function renderAnnouncement(): string {
   const a = content.announcement;
   const preview = a.lead.slice(0, 80) + (a.lead.length > 80 ? "…" : "");
   return `
-    <h2 class="dash-panel__title">Announcement</h2>
-    <p class="dash-panel__desc">Home page banner and ticker text.</p>
+    ${panelHead("Announcement", "Home page banner and ticker text.")}
     <div class="dash-list">
       ${listRow(a.dates || "Home announcement", preview || a.ticker, 0, false)}
     </div>`;
@@ -96,10 +190,8 @@ function renderNews(): string {
     .map((item, i) => listRow(item.title, `${item.tag} · ${item.date}`, i, true))
     .join("");
   return `
-    <h2 class="dash-panel__title">News</h2>
-    <p class="dash-panel__desc">Latest info cards on the home page.</p>
-    <div class="dash-list">${items}</div>
-    <button type="button" class="btn btn--primary dash-add" data-add>+ Add news item</button>`;
+    ${panelHead("News", "Latest info cards on the home page.", "+ Add news")}
+    <div class="dash-list">${items}</div>`;
 }
 
 function renderSymposia(key: "upcomingSymposia" | "pastSymposia" | "pastStudentSymposia", title: string, desc: string): string {
@@ -107,10 +199,8 @@ function renderSymposia(key: "upcomingSymposia" | "pastSymposia" | "pastStudentS
     .map((item, i) => listRow(item.title, `${item.dates} · ${item.venue}`, i, true))
     .join("");
   return `
-    <h2 class="dash-panel__title">${title}</h2>
-    <p class="dash-panel__desc">${desc}</p>
-    <div class="dash-list">${items}</div>
-    <button type="button" class="btn btn--primary dash-add" data-add>+ Add symposium</button>`;
+    ${panelHead(title, desc, "+ Add symposium")}
+    <div class="dash-list">${items}</div>`;
 }
 
 function renderDirectory(): string {
@@ -118,14 +208,12 @@ function renderDirectory(): string {
     .map((item, i) => listRow(item.name, `Membership No. ${item.membershipNo}`, i, true))
     .join("");
   return `
-    <h2 class="dash-panel__title">Member Directory</h2>
-    <p class="dash-panel__desc">Members listed on the members page.</p>
+    ${panelHead("Member Directory", "Members listed on the members page.", "+ Add member")}
     <div class="dash-inline-field">
       <label for="total-members">Total members</label>
       <input type="number" id="total-members" value="${content.totalMembers}" />
     </div>
-    <div class="dash-list">${items}</div>
-    <button type="button" class="btn btn--primary dash-add" data-add>+ Add member</button>`;
+    <div class="dash-list">${items}</div>`;
 }
 
 function renderFounders(): string {
@@ -133,10 +221,8 @@ function renderFounders(): string {
     .map((item, i) => listRow(item.name, `${item.title} · ${item.role}`, i, true))
     .join("");
   return `
-    <h2 class="dash-panel__title">Founder Members</h2>
-    <p class="dash-panel__desc">Founder members tab on the members page.</p>
-    <div class="dash-list">${items}</div>
-    <button type="button" class="btn btn--primary dash-add" data-add>+ Add founder</button>`;
+    ${panelHead("Founder Members", "Founder members tab on the members page.", "+ Add founder")}
+    <div class="dash-list">${items}</div>`;
 }
 
 function renderPanel(): void {
@@ -217,11 +303,13 @@ function getModalFields(): FormField[] {
   if (activeSection === "announcement") {
     return [
       { key: "lead", label: "Lead text", multiline: true },
-      { key: "dates", label: "Dates" },
+      { key: "dateStart", label: "Start date", type: "date" },
+      { key: "dateEnd", label: "End date", type: "date" },
       { key: "venue", label: "Venue" },
       { key: "coordinator", label: "Coordinator" },
-      { key: "cta", label: "Call to action text" },
-      { key: "ctaUrl", label: "CTA link URL (optional)" },
+      { key: "showCtaButton", label: "Show CTA button on home page", type: "checkbox", group: "cta" },
+      { key: "cta", label: "Button label", group: "cta", hint: "Shown when CTA button is enabled" },
+      { key: "ctaUrl", label: "Button URL", type: "url", group: "cta", hint: "e.g. /events.html or https://…" },
       { key: "ticker", label: "Ticker text", multiline: true },
     ];
   }
@@ -229,7 +317,7 @@ function getModalFields(): FormField[] {
     return [
       { key: "image", label: "Image URL (optional)" },
       { key: "tag", label: "Tag" },
-      { key: "date", label: "Date" },
+      { key: "date", label: "Date", type: "month" },
       { key: "title", label: "Title" },
       { key: "excerpt", label: "Excerpt", multiline: true },
     ];
@@ -237,7 +325,8 @@ function getModalFields(): FormField[] {
   if (activeSection === "events-upcoming") {
     return [
       { key: "title", label: "Title" },
-      { key: "dates", label: "Dates" },
+      { key: "dateStart", label: "Start date", type: "date" },
+      { key: "dateEnd", label: "End date", type: "date" },
       { key: "venue", label: "Venue" },
       { key: "coordinator", label: "Coordinator" },
       { key: "status", label: "Status" },
@@ -246,7 +335,8 @@ function getModalFields(): FormField[] {
   if (activeSection === "events-past" || activeSection === "events-student") {
     return [
       { key: "title", label: "Title" },
-      { key: "dates", label: "Dates" },
+      { key: "dateStart", label: "Start date", type: "date" },
+      { key: "dateEnd", label: "End date", type: "date" },
       { key: "venue", label: "Venue" },
     ];
   }
@@ -269,23 +359,42 @@ function getModalFields(): FormField[] {
 function getModalData(index: number | "new"): Record<string, string> {
   if (activeSection === "announcement") {
     const a = content.announcement;
-    return { lead: a.lead, dates: a.dates, venue: a.venue, coordinator: a.coordinator, cta: a.cta, ctaUrl: a.ctaUrl ?? "", ticker: a.ticker };
+    const { start, end } = parseDateRange(a.dates);
+    return {
+      lead: a.lead,
+      dateStart: start,
+      dateEnd: end,
+      venue: a.venue,
+      coordinator: a.coordinator,
+      showCtaButton: a.showCtaButton ? "true" : "false",
+      cta: a.cta,
+      ctaUrl: a.ctaUrl ?? "",
+      ticker: a.ticker,
+    };
   }
   if (index === "new") {
-    return Object.fromEntries(getModalFields().map((f) => [f.key, ""]));
+    return Object.fromEntries(getModalFields().map((f) => [f.key, f.type === "checkbox" ? "false" : ""]));
   }
 
   const i = index as number;
   if (activeSection === "news") {
     const item = content.news[i];
-    return { image: item.image ?? "", tag: item.tag, date: item.date, title: item.title, excerpt: item.excerpt };
+    return {
+      image: item.image ?? "",
+      tag: item.tag,
+      date: parseNewsMonth(item.date),
+      title: item.title,
+      excerpt: item.excerpt,
+    };
   }
   const symKey = SYM_KEYS[activeSection as keyof typeof SYM_KEYS];
   if (symKey) {
     const item = content[symKey][i];
+    const { start, end } = parseDateRange(item.dates);
     return {
       title: item.title,
-      dates: item.dates,
+      dateStart: start,
+      dateEnd: end,
       venue: item.venue,
       coordinator: item.coordinator ?? "",
       status: item.status ?? "",
@@ -327,11 +436,34 @@ function modalTitle(index: number | "new"): string {
 }
 
 function fieldHtml(field: FormField, value: string): string {
-  const input =
-    field.multiline
-      ? `<textarea name="${field.key}" rows="3">${esc(value)}</textarea>`
-      : `<input type="${field.type ?? "text"}" name="${field.key}" value="${esc(value)}" />`;
-  return `<div><label>${field.label}</label>${input}</div>`;
+  if (field.type === "checkbox") {
+    const checked = value === "true" ? " checked" : "";
+    return `<div class="dash-field dash-field--checkbox" data-group="${field.group ?? ""}"><label class="dash-checkbox"><input type="checkbox" name="${field.key}"${checked} /><span>${field.label}</span></label></div>`;
+  }
+
+  const hint = field.hint ? `<p class="dash-field__hint">${field.hint}</p>` : "";
+  const inputType = field.type ?? "text";
+  const input = field.multiline
+    ? `<textarea name="${field.key}" rows="3">${esc(value)}</textarea>`
+    : `<input type="${inputType}" name="${field.key}" value="${esc(value)}" />`;
+
+  return `<div class="dash-field" data-group="${field.group ?? ""}"><label>${field.label}</label>${input}${hint}</div>`;
+}
+
+function bindFormEnhancements(): void {
+  const form = document.getElementById("dash-modal-form");
+  if (!form) return;
+
+  const toggleCtaFields = (): void => {
+    const enabled = (form.querySelector('[name="showCtaButton"]') as HTMLInputElement | null)?.checked;
+    form.querySelectorAll('[data-group="cta"]').forEach((el) => {
+      if ((el as HTMLElement).querySelector('[name="showCtaButton"]')) return;
+      (el as HTMLElement).hidden = !enabled;
+    });
+  };
+
+  form.querySelector('[name="showCtaButton"]')?.addEventListener("change", toggleCtaFields);
+  toggleCtaFields();
 }
 
 function openModal(index: number | "new"): void {
@@ -344,6 +476,7 @@ function openModal(index: number | "new"): void {
   titleEl.textContent = modalTitle(index);
   const data = getModalData(index);
   form.innerHTML = getModalFields().map((f) => fieldHtml(f, data[f.key] ?? "")).join("");
+  bindFormEnhancements();
   modal.hidden = false;
   document.body.style.overflow = "hidden";
   (form.querySelector("input, textarea") as HTMLElement | null)?.focus();
@@ -361,6 +494,11 @@ function readModalForm(): Record<string, string> {
   if (!form) return {};
   const data: Record<string, string> = {};
   getModalFields().forEach((field) => {
+    if (field.type === "checkbox") {
+      const el = form.querySelector(`[name="${field.key}"]`) as HTMLInputElement | null;
+      data[field.key] = el?.checked ? "true" : "false";
+      return;
+    }
     const el = form.querySelector(`[name="${field.key}"]`) as HTMLInputElement | HTMLTextAreaElement | null;
     data[field.key] = el?.value ?? "";
   });
@@ -371,9 +509,10 @@ function applyModalData(data: Record<string, string>): void {
   if (activeSection === "announcement") {
     content.announcement = {
       lead: data.lead ?? "",
-      dates: data.dates ?? "",
+      dates: formatDateRange(data.dateStart ?? "", data.dateEnd ?? ""),
       venue: data.venue ?? "",
       coordinator: data.coordinator ?? "",
+      showCtaButton: data.showCtaButton === "true",
       cta: data.cta ?? "",
       ctaUrl: data.ctaUrl ?? "",
       ticker: data.ticker ?? "",
@@ -384,15 +523,15 @@ function applyModalData(data: Record<string, string>): void {
   const saveNews = (): NewsItem => ({
     image: data.image ?? "",
     tag: data.tag ?? "",
-    date: data.date ?? "",
+    date: formatNewsMonth(data.date ?? "") || data.date || "",
     title: data.title ?? "",
     excerpt: data.excerpt ?? "",
   });
 
-  const saveSymposium = (item: SymposiumEvent): SymposiumEvent => {
+  const saveSymposium = (): SymposiumEvent => {
     const base: SymposiumEvent = {
       title: data.title ?? "",
-      dates: data.dates ?? "",
+      dates: formatDateRange(data.dateStart ?? "", data.dateEnd ?? ""),
       venue: data.venue ?? "",
     };
     if (activeSection === "events-upcoming") {
@@ -422,7 +561,7 @@ function applyModalData(data: Record<string, string>): void {
 
   const symKey = SYM_KEYS[activeSection as keyof typeof SYM_KEYS];
   if (symKey) {
-    const item = saveSymposium({ title: "", dates: "", venue: "" });
+    const item = saveSymposium();
     if (modalIndex === "new") content[symKey].push(item);
     else content[symKey][modalIndex as number] = item;
     return;

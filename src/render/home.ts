@@ -59,11 +59,9 @@ export function renderHomePage(): void {
       <p><strong>Coordinator:</strong> ${escapeHtml(data.announcement.coordinator)}</p>`;
   }
   if (ctaWrap) {
-    const { cta, ctaUrl } = data.announcement;
-    if (ctaUrl) {
+    const { cta, ctaUrl, showCtaButton } = data.announcement;
+    if (showCtaButton && ctaUrl) {
       ctaWrap.innerHTML = `<a href="${escapeHtml(ctaUrl)}" class="btn btn--announcement">${escapeHtml(cta || "Learn more")}</a>`;
-    } else if (cta) {
-      ctaWrap.innerHTML = `<p class="announcement__cta">${escapeHtml(cta)}</p>`;
     } else {
       ctaWrap.innerHTML = "";
     }
