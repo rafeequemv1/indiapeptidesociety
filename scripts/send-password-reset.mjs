@@ -34,7 +34,7 @@ if (!url || !key) {
   process.exit(1);
 }
 
-const redirectTo = process.env.RESET_REDIRECT || "http://localhost:5173/dashboard.html?reset=1";
+const redirectTo = process.env.RESET_REDIRECT || "http://localhost:5173/membership.html?reset=1";
 
 const res = await fetch(`${url}/auth/v1/recover`, {
   method: "POST",

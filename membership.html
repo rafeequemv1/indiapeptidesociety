@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Membership | Indian Peptide Society</title>
+    <title>Sign In | Indian Peptide Society</title>
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <meta name="description" content="Sign up or sign in to the Indian Peptide Society membership portal." />
+    <meta name="description" content="Sign in, sign up, or reset your password for the Indian Peptide Society." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -18,47 +18,100 @@
     <main>
       <section class="page-hero page-hero--membership">
         <div class="container">
-          <h1 class="page-hero__title">Sign Up</h1>
-          <p class="page-hero__sub">Indian Peptide Society Membership</p>
+          <h1 class="page-hero__title" id="auth-hero-title">Sign In</h1>
+          <p class="page-hero__sub" id="auth-hero-sub">Indian Peptide Society Membership</p>
         </div>
       </section>
 
       <section class="section membership-page">
-        <div class="container membership-page__grid">
-          <div class="membership-card">
-            <div class="membership-card__head">
-              <h2>New Members</h2>
-              <p>Sign Up</p>
-            </div>
-            <div class="membership-card__body">
-              <div class="maintenance-notice">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                <p>
-                  Our Membership service has been temporarily paused as our website is under maintenance and we will resume our services from
-                  <strong>May 01, 2025</strong>.
-                </p>
+        <div class="container">
+          <div id="auth-signed-in" class="auth-panel" hidden>
+            <div class="auth-panel__card">
+              <h2 class="auth-panel__title">You are signed in</h2>
+              <p class="auth-panel__lead">Signed in as <strong id="auth-user-email"></strong></p>
+              <div class="auth-panel__actions">
+                <a href="/dashboard.html" class="btn btn--primary" id="auth-go-dashboard" hidden>Open dashboard</a>
+                <a href="/index.html" class="btn btn--outline">Go to home</a>
+                <button type="button" class="btn btn--ghost" id="auth-signout">Sign out</button>
               </div>
-              <button type="button" class="btn btn--primary btn--full" disabled>Sign Up</button>
             </div>
           </div>
 
-          <div class="membership-card" id="signin">
-            <div class="membership-card__head membership-card__head--navy">
-              <h2>Existing Members</h2>
-              <p>Sign In</p>
+          <div id="auth-set-password" class="auth-panel" hidden>
+            <div class="auth-panel__card">
+              <h2 class="auth-panel__title">Set a new password</h2>
+              <p class="auth-panel__lead">You opened the reset link from your email. Choose a new password.</p>
+              <form id="set-password-form" class="contact-form contact-form--plain">
+                <div class="form-group">
+                  <label for="set-password">New password</label>
+                  <input id="set-password" name="password" type="password" required minlength="8" autocomplete="new-password" />
+                </div>
+                <div class="form-group">
+                  <label for="set-password-confirm">Confirm password</label>
+                  <input id="set-password-confirm" name="confirm" type="password" required minlength="8" autocomplete="new-password" />
+                </div>
+                <p class="auth-msg auth-msg--error" id="set-password-error" role="alert" hidden></p>
+                <button type="submit" class="btn btn--primary btn--full">Save password</button>
+              </form>
+              <p class="auth-panel__links">
+                <button type="button" class="auth-text-link" data-mode="signin">Cancel and sign in</button>
+              </p>
             </div>
-            <div class="membership-card__body">
+          </div>
+
+          <div id="auth-forms" class="auth-panel">
+            <div class="auth-panel__card" id="signin">
+              <div class="auth-mode-tabs" role="tablist" aria-label="Account">
+                <button type="button" class="auth-mode-tabs__btn is-active" data-mode="signin" role="tab" aria-selected="true">Sign In</button>
+                <button type="button" class="auth-mode-tabs__btn" data-mode="signup" role="tab" aria-selected="false">Sign Up</button>
+              </div>
+
               <form id="signin-form" class="contact-form contact-form--plain">
                 <div class="form-group">
                   <label for="signin-email">Email</label>
-                  <input id="signin-email" name="email" type="email" required />
+                  <input id="signin-email" name="email" type="email" required autocomplete="username" />
                 </div>
                 <div class="form-group">
                   <label for="signin-password">Password</label>
-                  <input id="signin-password" name="password" type="password" required />
+                  <input id="signin-password" name="password" type="password" required autocomplete="current-password" />
                 </div>
+                <p class="auth-msg auth-msg--error" id="signin-error" role="alert" hidden></p>
                 <button type="submit" class="btn btn--primary btn--full">Sign In</button>
               </form>
+
+              <form id="signup-form" class="contact-form contact-form--plain" hidden>
+                <div class="form-group">
+                  <label for="signup-name">Full name</label>
+                  <input id="signup-name" name="full_name" type="text" required autocomplete="name" />
+                </div>
+                <div class="form-group">
+                  <label for="signup-email">Email</label>
+                  <input id="signup-email" name="email" type="email" required autocomplete="email" />
+                </div>
+                <div class="form-group">
+                  <label for="signup-password">Password</label>
+                  <input id="signup-password" name="password" type="password" required minlength="8" autocomplete="new-password" />
+                </div>
+                <p class="auth-msg auth-msg--error" id="signup-error" role="alert" hidden></p>
+                <p class="auth-msg auth-msg--ok" id="signup-ok" hidden></p>
+                <button type="submit" class="btn btn--primary btn--full">Create account</button>
+              </form>
+
+              <form id="forgot-form" class="contact-form contact-form--plain" hidden>
+                <p class="auth-panel__lead auth-panel__lead--tight">Enter your email and we will send a password reset link.</p>
+                <div class="form-group">
+                  <label for="forgot-email">Email</label>
+                  <input id="forgot-email" name="email" type="email" required autocomplete="username" />
+                </div>
+                <p class="auth-msg auth-msg--error" id="forgot-error" role="alert" hidden></p>
+                <p class="auth-msg auth-msg--ok" id="forgot-ok" hidden></p>
+                <button type="submit" class="btn btn--primary btn--full">Send reset link</button>
+              </form>
+
+              <p class="auth-panel__links">
+                <button type="button" class="auth-text-link" id="show-forgot">Forgot password?</button>
+                <button type="button" class="auth-text-link" id="show-signin" hidden>Back to sign in</button>
+              </p>
             </div>
           </div>
         </div>

@@ -8,8 +8,51 @@ export function authReady(): boolean {
 }
 
 /** Redirect target after user clicks the reset email link. */
-export function passwordResetRedirectUrl(): string {
-  return `${window.location.origin}/dashboard.html?reset=1`;
+export function passwordResetRedirectUrl(page: "membership" | "dashboard" = "membership"): string {
+  const path = page === "dashboard" ? "/dashboard.html" : "/membership.html";
+  return `${window.location.origin}${path}?reset=1`;
+}
+
+/**
+ * Sign up via Edge Function (creates a confirmed user, no confirmation email).
+ * Avoids Supabase built-in SMTP rate limits that block /auth/v1/signup.
+ * Then signs the user in with the password they just chose.
+ */
+export async function signUpWithPassword(email: string, password: string, fullName: string) {
+  const client = getSupabaseClient();
+  const { data: fnData, error: fnError } = await client.functions.invoke("member-signup", {
+    body: { email, password, full_name: fullName },
+  });
+
+  if (fnError) {
+    let message = fnError.message || "Could not create account";
+    try {
+      const ctx = (fnError as { context?: Response }).context;
+      if (ctx) {
+        const payload = (await ctx.json()) as { error?: string };
+        if (payload?.error) message = payload.error;
+      }
+    } catch {
+      /* keep default message */
+    }
+    if (/rate limit|over_email/i.test(message)) {
+      message =
+        "Email sending is temporarily limited by the provider. Sign up no longer needs email confirmation — please try again.";
+    }
+    return { data: { user: null, session: null }, error: { message } };
+  }
+
+  if (fnData?.error) {
+    return { data: { user: null, session: null }, error: { message: String(fnData.error) } };
+  }
+
+  // Immediately sign in — account is already confirmed
+  return client.auth.signInWithPassword({ email, password });
+}
+
+export function isAdminUser(user: User | null | undefined): boolean {
+  if (!user) return false;
+  return user.app_metadata?.role === "admin";
 }
 
 function urlLooksLikeRecoveryReturn(): boolean {

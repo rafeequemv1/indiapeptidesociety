@@ -69,7 +69,7 @@ export function renderTopBar(opts?: { showDashboard?: boolean }): string {
         <div class="top-bar__social">${socialIcons(16)}</div>
         <p class="top-bar__member">
           Want to become a Member?
-          <a href="/membership.html">Sign up</a>
+          <a href="/membership.html#signup">Sign up</a>
         </p>
         <div class="top-bar__contact">
           <a href="mailto:indianpeptidesociety@gmail.com" class="top-bar__email">
@@ -77,7 +77,7 @@ export function renderTopBar(opts?: { showDashboard?: boolean }): string {
             <span>indianpeptidesociety@gmail.com</span>
           </a>${dashboardLink}
           <span class="top-bar__divider"></span>
-          <a href="/membership.html#signin" class="top-bar__signin">Sign In</a>
+          <a href="/membership.html#signin" class="top-bar__signin" id="top-bar-signin">Sign In</a>
         </div>
       </div>
     </div>`;

@@ -1709,7 +1709,7 @@ function bindAuthForms(): void {
     setMsg("dash-reset-error", "", false);
     setMsg("dash-reset-ok", "", false);
     // Stay on forgot-password form — do NOT open set-password until email link is used
-    const { error } = await requestPasswordReset(email, passwordResetRedirectUrl());
+    const { error } = await requestPasswordReset(email, passwordResetRedirectUrl("dashboard"));
     if (error) {
       setMsg("dash-reset-error", error.message, true);
       return;
