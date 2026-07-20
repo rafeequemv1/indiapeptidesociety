@@ -7,32 +7,92 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/css/styles.css" />
     <link rel="stylesheet" href="/css/dashboard.css" />
   </head>
   <body class="dashboard-body">
-    <header class="dashboard-top">
-      <div class="dashboard-top__inner">
-        <a href="/index.html" class="dashboard-top__brand">
-          <img src="/images/ips-logo.png" alt="IPS" class="dashboard-top__logo" />
-          <span>Dashboard</span>
-        </a>
-        <div class="dashboard-top__actions">
-          <a href="/index.html" class="dashboard-top__link">View site</a>
-          <button type="button" class="btn btn--ghost" id="btn-reset">Reset</button>
-          <button type="button" class="btn btn--primary" id="btn-save">Save</button>
+    <div id="top-bar-mount"></div>
+    <div id="header-mount"></div>
+
+    <div id="dash-auth" class="dash-auth" hidden>
+      <div class="dash-auth__card">
+        <h1 class="dash-auth__title">Dashboard sign in</h1>
+        <p class="dash-auth__lead">Sign in with your IPS admin account to manage site content.</p>
+        <form id="dash-login-form" class="dash-auth__form">
+          <label class="dash-field">
+            <span>Email</span>
+            <input type="email" name="email" required autocomplete="username" />
+          </label>
+          <label class="dash-field">
+            <span>Password</span>
+            <input type="password" name="password" required autocomplete="current-password" />
+          </label>
+          <p class="dash-auth__error" id="dash-login-error" role="alert" hidden></p>
+          <button type="submit" class="btn btn--primary btn--full">Sign in</button>
+        </form>
+        <form id="dash-reset-form" class="dash-auth__form" hidden>
+          <label class="dash-field">
+            <span>Email</span>
+            <input type="email" name="email" required autocomplete="username" />
+          </label>
+          <p class="dash-auth__error" id="dash-reset-error" role="alert" hidden></p>
+          <p class="dash-auth__ok" id="dash-reset-ok" hidden></p>
+          <button type="submit" class="btn btn--primary btn--full">Send reset link</button>
+        </form>
+        <p class="dash-auth__switch">
+          <button type="button" class="dash-auth__link" id="dash-show-reset">Forgot password?</button>
+          <button type="button" class="dash-auth__link" id="dash-show-login" hidden>Back to sign in</button>
+        </p>
+      </div>
+    </div>
+
+    <div id="dash-set-password" class="dash-auth" hidden>
+      <div class="dash-auth__card">
+        <h1 class="dash-auth__title">Set a new password</h1>
+        <p class="dash-auth__lead">You opened the reset link from your email. Choose a new password for your account.</p>
+        <form id="dash-password-form" class="dash-auth__form">
+          <label class="dash-field">
+            <span>New password</span>
+            <input type="password" name="password" required minlength="8" autocomplete="new-password" />
+          </label>
+          <label class="dash-field">
+            <span>Confirm password</span>
+            <input type="password" name="confirm" required minlength="8" autocomplete="new-password" />
+          </label>
+          <p class="dash-auth__error" id="dash-password-error" role="alert" hidden></p>
+          <button type="submit" class="btn btn--primary btn--full">Save password</button>
+        </form>
+        <p class="dash-auth__switch">
+          <button type="button" class="dash-auth__link" id="dash-cancel-reset">Cancel and sign in</button>
+        </p>
+      </div>
+    </div>
+
+    <div id="dash-app" hidden>
+      <div class="dashboard-toolbar">
+        <div class="dashboard-toolbar__inner">
+          <p class="dashboard-toolbar__label">Content dashboard</p>
+          <div class="dashboard-toolbar__actions">
+            <span class="dashboard-toolbar__user" id="dash-user-email"></span>
+            <button type="button" class="btn btn--ghost" id="btn-signout">Sign out</button>
+            <button type="button" class="btn btn--ghost" id="btn-reset">Reset</button>
+            <button type="button" class="btn btn--primary" id="btn-save">Save</button>
+          </div>
         </div>
       </div>
-    </header>
 
-    <div class="dashboard-layout">
-      <nav class="dashboard-list" id="dashboard-nav" aria-label="Manage content"></nav>
+      <div class="dashboard-layout">
+        <nav class="dashboard-list" id="dashboard-nav" aria-label="Manage content"></nav>
 
-      <div class="dashboard-main">
-        <nav class="dashboard-main__breadcrumb" id="breadcrumb" aria-label="Breadcrumb"></nav>
-        <div class="dashboard-main__panel" id="dashboard-panel"></div>
-        <p class="dashboard-main__status" id="save-status" role="status"></p>
+        <div class="dashboard-main">
+          <nav class="dashboard-main__breadcrumb" id="breadcrumb" aria-label="Breadcrumb"></nav>
+          <div class="dashboard-main__panel" id="dashboard-panel"></div>
+          <p class="dashboard-main__status" id="save-status" role="status"></p>
+        </div>
       </div>
     </div>
 

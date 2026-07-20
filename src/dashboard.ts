@@ -11,6 +11,24 @@ import {
   type BlogPost,
   type TeamMember,
 } from "./data/store";
+import { injectLayout } from "./layout";
+import { initMobileMenu } from "./shared";
+import {
+  authReady,
+  clearPasswordRecovery,
+  getSession,
+  isPasswordResetReturn,
+  markPasswordRecovery,
+  onAuthStateChange,
+  passwordResetRedirectUrl,
+  pruneStalePasswordRecovery,
+  requestPasswordReset,
+  signInWithPassword,
+  signOut,
+  updatePassword,
+} from "./auth/session";
+import { downloadTextFile, parseCsv, readFileAsText, readImageAsDataUrl, toCsv } from "./lib/csv";
+import { destroyBlogEditor, getBlogEditorHtml, mountBlogEditor } from "./lib/blog-editor";
 
 type SectionId =
   | "announcement"
@@ -37,9 +55,10 @@ interface FormField {
   key: string;
   label: string;
   multiline?: boolean;
-  type?: "text" | "number" | "date" | "month" | "url" | "checkbox";
+  type?: "text" | "number" | "date" | "month" | "url" | "checkbox" | "file" | "richtext";
   hint?: string;
   group?: string;
+  accept?: string;
 }
 
 function toIsoDate(d: Date): string {
@@ -250,6 +269,18 @@ function renderSymposia(key: "upcomingSymposia" | "pastSymposia" | "pastStudentS
     <div class="dash-list">${items}</div>`;
 }
 
+function membersCsvBar(kind: "permanent" | "executive" | "attendees" | "recognized"): string {
+  return `
+    <div class="dash-csv-bar" data-csv-kind="${kind}">
+      <button type="button" class="btn btn--ghost btn--sm" data-csv-export>Export CSV</button>
+      <button type="button" class="btn btn--ghost btn--sm" data-csv-template>Download template</button>
+      <label class="btn btn--outline btn--sm dash-csv-import">
+        Import CSV
+        <input type="file" accept=".csv,text/csv" data-csv-import hidden />
+      </label>
+    </div>`;
+}
+
 function renderPermanent(): string {
   const items = content.permanentMembers
     .map((item, i) =>
@@ -263,6 +294,7 @@ function renderPermanent(): string {
     .join("");
   return `
     ${panelHead("Permanent Members", "Permanent members tab — founders show a Founder badge.", "+ Add member")}
+    ${membersCsvBar("permanent")}
     <div class="dash-inline-field">
       <label for="total-members">Total members</label>
       <input type="number" id="total-members" value="${content.totalMembers}" />
@@ -276,6 +308,7 @@ function renderExecutive(): string {
     .join("");
   return `
     ${panelHead("Executive Members", "Office bearers on the members page and home team section.", "+ Add executive")}
+    ${membersCsvBar("executive")}
     <div class="dash-list">${items}</div>`;
 }
 
@@ -292,6 +325,7 @@ function renderAttendees(): string {
     .join("");
   return `
     ${panelHead("Symposium Attendees", "One symposium per year — filterable by year on the members page.", "+ Add attendee")}
+    ${membersCsvBar("attendees")}
     <div class="dash-list">${items}</div>`;
 }
 
@@ -303,6 +337,7 @@ function renderRecognized(): string {
     .join("");
   return `
     ${panelHead("Recognised People", "Lifetime Achievement and Young Scientist honorees.", "+ Add person")}
+    ${membersCsvBar("recognized")}
     <div class="dash-list">${items}</div>`;
 }
 
@@ -311,7 +346,7 @@ function renderBlog(): string {
     .map((item, i) => listRow(item.title, `${item.tag} · ${item.date} · ${item.slug}`, i, true))
     .join("");
   return `
-    ${panelHead("Blog Posts", "Medium-style articles on the blog page. Body supports HTML (p, h2, h3).", "+ Add post")}
+    ${panelHead("Blog Posts", "Articles on the blog page. Write with the rich editor — headings, lists, links, and images.", "+ Add post")}
     <div class="dash-list">${items}</div>`;
 }
 
@@ -327,16 +362,55 @@ function renderRegSettings(): string {
 }
 
 let regFilter: "all" | "abstracts" | "no-abstract" = "all";
+let regYear = "";
+let regMonth = "";
+
+function regSubmittedParts(iso: string): { year: string; month: string } {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { year: "", month: "" };
+  return {
+    year: String(d.getFullYear()),
+    month: String(d.getMonth() + 1).padStart(2, "0"),
+  };
+}
 
 function renderRegEntries(): string {
   const all = content.symposiumRegistrations;
   const withAbstract = all.filter((r) => r.hasAbstract || Boolean(r.abstractFileName));
-  const filtered =
+
+  const years = Array.from(
+    new Set(all.map((r) => regSubmittedParts(r.submittedAt).year).filter(Boolean)),
+  ).sort((a, b) => Number(b) - Number(a));
+
+  let filtered =
     regFilter === "abstracts"
       ? withAbstract
       : regFilter === "no-abstract"
         ? all.filter((r) => !(r.hasAbstract || r.abstractFileName))
         : all;
+
+  if (regYear) {
+    filtered = filtered.filter((r) => regSubmittedParts(r.submittedAt).year === regYear);
+  }
+  if (regMonth) {
+    filtered = filtered.filter((r) => regSubmittedParts(r.submittedAt).month === regMonth);
+  }
+
+  const monthOptions = [
+    { value: "", label: "All months" },
+    { value: "01", label: "January" },
+    { value: "02", label: "February" },
+    { value: "03", label: "March" },
+    { value: "04", label: "April" },
+    { value: "05", label: "May" },
+    { value: "06", label: "June" },
+    { value: "07", label: "July" },
+    { value: "08", label: "August" },
+    { value: "09", label: "September" },
+    { value: "10", label: "October" },
+    { value: "11", label: "November" },
+    { value: "12", label: "December" },
+  ];
 
   const rows = filtered.length
     ? filtered
@@ -356,11 +430,29 @@ function renderRegEntries(): string {
     : `<p class="dash-empty">No registrations in this filter.</p>`;
 
   return `
-    ${panelHead("Registrations", `Form submissions (${all.length}). ${withAbstract.length} with abstract. Filter below; download receipts from View.`)}
+    ${panelHead("Registrations", `Form submissions (${all.length}). ${withAbstract.length} with abstract. Filter by abstract, year, or month; download receipts from View.`)}
     <div class="dash-filter-bar" role="group" aria-label="Filter registrations">
       <button type="button" class="dash-filter${regFilter === "all" ? " is-active" : ""}" data-reg-filter="all">All (${all.length})</button>
       <button type="button" class="dash-filter${regFilter === "abstracts" ? " is-active" : ""}" data-reg-filter="abstracts">With abstract (${withAbstract.length})</button>
       <button type="button" class="dash-filter${regFilter === "no-abstract" ? " is-active" : ""}" data-reg-filter="no-abstract">No abstract (${all.length - withAbstract.length})</button>
+    </div>
+    <div class="dash-date-filters">
+      <label class="dash-date-filters__field">
+        <span>Year</span>
+        <select id="reg-year-filter" data-reg-year>
+          <option value="">All years</option>
+          ${years.map((y) => `<option value="${y}"${regYear === y ? " selected" : ""}>${y}</option>`).join("")}
+        </select>
+      </label>
+      <label class="dash-date-filters__field">
+        <span>Month</span>
+        <select id="reg-month-filter" data-reg-month>
+          ${monthOptions
+            .map((m) => `<option value="${m.value}"${regMonth === m.value ? " selected" : ""}>${m.label}</option>`)
+            .join("")}
+        </select>
+      </label>
+      <p class="dash-date-filters__count">${filtered.length} shown</p>
     </div>
     <div class="dash-list">${rows}</div>`;
 }
@@ -476,7 +568,12 @@ function getModalFields(): FormField[] {
       { key: "showCtaButton", label: "Show CTA button on home page", type: "checkbox", group: "cta" },
       { key: "cta", label: "Button label", group: "cta", hint: "Shown when CTA button is enabled" },
       { key: "ctaUrl", label: "Button URL", type: "url", group: "cta", hint: "e.g. /events.html or https://…" },
-      { key: "ticker", label: "Ticker text", multiline: true },
+      {
+        key: "ticker",
+        label: "Ticker text",
+        multiline: true,
+        hint: "When symposium registration is enabled, the home ribbon auto-updates from registration title, dates, and venue.",
+      },
     ];
   }
   if (activeSection === "news") {
@@ -544,8 +641,19 @@ function getModalFields(): FormField[] {
       { key: "tag", label: "Tag" },
       { key: "date", label: "Date", type: "month" },
       { key: "excerpt", label: "Excerpt", multiline: true },
-      { key: "coverImage", label: "Cover image URL (optional)" },
-      { key: "body", label: "Body (HTML: p, h2, h3)", multiline: true },
+      {
+        key: "coverImage",
+        label: "Thumbnail image",
+        type: "file",
+        accept: "image/*",
+        hint: "Shown on the blog list and at the top of the article. JPG/PNG/WebP, max 2 MB.",
+      },
+      {
+        key: "body",
+        label: "Article body",
+        type: "richtext",
+        hint: "Bold, headings, bullet/numbered lists, links, and inline images.",
+      },
     ];
   }
   if (activeSection === "reg-settings") {
@@ -767,8 +875,33 @@ function fieldHtml(field: FormField, value: string): string {
   }
 
   const hint = field.hint ? `<p class="dash-field__hint">${field.hint}</p>` : "";
+
+  if (field.type === "file") {
+    const preview = value
+      ? `<img src="${esc(value)}" alt="" class="dash-thumb-preview" data-thumb-preview="${field.key}" />`
+      : `<p class="dash-field__hint" data-thumb-empty="${field.key}">No image selected.</p>`;
+    return `
+      <div class="dash-field" data-group="${field.group ?? ""}">
+        <label>${field.label}</label>
+        <input type="hidden" name="${field.key}" value="${esc(value)}" />
+        <input type="file" accept="${field.accept || "image/*"}" data-file-for="${field.key}" />
+        <div class="dash-thumb-wrap">${preview}</div>
+        ${value ? `<button type="button" class="btn btn--ghost btn--sm" data-clear-file="${field.key}">Remove image</button>` : ""}
+        ${hint}
+      </div>`;
+  }
+
+  if (field.type === "richtext") {
+    return `
+      <div class="dash-field dash-field--richtext" data-group="${field.group ?? ""}">
+        <label>${field.label}</label>
+        <div class="tiptap-host" data-richtext-host="${field.key}"></div>
+        ${hint}
+      </div>`;
+  }
+
   const inputType = field.type ?? "text";
-  const rows = field.key === "body" ? 12 : 3;
+  const rows = field.multiline ? 3 : undefined;
   const input = field.multiline
     ? `<textarea name="${field.key}" rows="${rows}">${esc(value)}</textarea>`
     : `<input type="${inputType}" name="${field.key}" value="${esc(value)}" />`;
@@ -790,19 +923,66 @@ function bindFormEnhancements(): void {
 
   form.querySelector('[name="showCtaButton"]')?.addEventListener("change", toggleCtaFields);
   toggleCtaFields();
+
+  form.querySelectorAll<HTMLInputElement>("[data-file-for]").forEach((input) => {
+    input.addEventListener("change", async () => {
+      const key = input.dataset.fileFor || "";
+      const file = input.files?.[0];
+      const hidden = form.querySelector(`[name="${key}"]`) as HTMLInputElement | null;
+      const wrap = form.querySelector(".dash-thumb-wrap");
+      if (!file || !hidden || !wrap) return;
+      try {
+        const dataUrl = await readImageAsDataUrl(file);
+        hidden.value = dataUrl;
+        wrap.innerHTML = `<img src="${esc(dataUrl)}" alt="" class="dash-thumb-preview" data-thumb-preview="${key}" />`;
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Could not read image");
+        input.value = "";
+      }
+    });
+  });
+
+  form.querySelectorAll<HTMLButtonElement>("[data-clear-file]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.clearFile || "";
+      const hidden = form.querySelector(`[name="${key}"]`) as HTMLInputElement | null;
+      const fileInput = form.querySelector(`[data-file-for="${key}"]`) as HTMLInputElement | null;
+      const wrap = form.querySelector(".dash-thumb-wrap");
+      if (hidden) hidden.value = "";
+      if (fileInput) fileInput.value = "";
+      if (wrap) wrap.innerHTML = `<p class="dash-field__hint" data-thumb-empty="${key}">No image selected.</p>`;
+      btn.remove();
+    });
+  });
+}
+
+let richtextSeedHtml = "";
+
+async function mountRichTextFields(form: HTMLElement): Promise<void> {
+  const hosts = form.querySelectorAll<HTMLElement>("[data-richtext-host]");
+  if (!hosts.length) return;
+  for (const host of hosts) {
+    await mountBlogEditor(host, richtextSeedHtml);
+  }
 }
 
 function openModal(index: number | "new"): void {
   modalIndex = index;
   const modal = document.getElementById("dash-modal");
+  const dialog = modal?.querySelector(".dash-modal__dialog");
   const titleEl = document.getElementById("dash-modal-title");
   const form = document.getElementById("dash-modal-form");
   const saveBtn = document.getElementById("dash-modal-save");
   if (!modal || !titleEl || !form) return;
 
+  destroyBlogEditor();
+
   titleEl.textContent = modalTitle(index);
   const data = getModalData(index);
+  richtextSeedHtml = data.body ?? "";
   const readOnly = activeSection === "inbox-contact" || activeSection === "reg-entries";
+  const isBlog = activeSection === "blog";
+  dialog?.classList.toggle("dash-modal__dialog--wide", isBlog);
   form.innerHTML = getModalFields().map((f) => fieldHtml(f, data[f.key] ?? "")).join("");
   if (readOnly) {
     form.querySelectorAll("input, textarea, select").forEach((el) => {
@@ -862,16 +1042,21 @@ function openModal(index: number | "new"): void {
   bindFormEnhancements();
   modal.hidden = false;
   document.body.style.overflow = "hidden";
-  if (!readOnly) {
-    (form.querySelector("input, textarea") as HTMLElement | null)?.focus();
-  }
+  void mountRichTextFields(form).then(() => {
+    if (!readOnly) {
+      (form.querySelector("input:not([type=hidden]), textarea") as HTMLElement | null)?.focus();
+    }
+  });
 }
 
 function closeModal(): void {
   modalIndex = null;
   const modal = document.getElementById("dash-modal");
+  const dialog = modal?.querySelector(".dash-modal__dialog");
   const saveBtn = document.getElementById("dash-modal-save");
+  destroyBlogEditor();
   if (modal) modal.hidden = true;
+  dialog?.classList.remove("dash-modal__dialog--wide");
   if (saveBtn) saveBtn.hidden = false;
   document.body.style.overflow = "";
 }
@@ -884,6 +1069,15 @@ function readModalForm(): Record<string, string> {
     if (field.type === "checkbox") {
       const el = form.querySelector(`[name="${field.key}"]`) as HTMLInputElement | null;
       data[field.key] = el?.checked ? "true" : "false";
+      return;
+    }
+    if (field.type === "file") {
+      const el = form.querySelector(`[name="${field.key}"]`) as HTMLInputElement | null;
+      data[field.key] = el?.value ?? "";
+      return;
+    }
+    if (field.type === "richtext") {
+      data[field.key] = getBlogEditorHtml();
       return;
     }
     const el = form.querySelector(`[name="${field.key}"]`) as HTMLInputElement | HTMLTextAreaElement | null;
@@ -920,8 +1114,12 @@ function applyModalData(data: Record<string, string>): void {
       venue: data.venue ?? "",
       feeNote: data.feeNote ?? "",
       razorpayUrl: data.razorpayUrl ?? "",
-      ctaLabel: data.ctaLabel ?? "Register & Pay",
+      ctaLabel: data.ctaLabel ?? "Register",
     };
+    const r = content.symposiumRegistration;
+    if (r.enabled) {
+      content.announcement.ticker = `${r.title || "Indian Peptide Symposium"} will be held${r.dates ? ` from ${r.dates}` : ""}${r.venue ? ` at ${r.venue}` : ""}. Register online — stay tuned for updates!`;
+    }
     return;
   }
 
@@ -1050,6 +1248,153 @@ function moveItem<T>(arr: T[], index: number, dir: -1 | 1): void {
   [arr[index], arr[next]] = [arr[next], arr[index]];
 }
 
+function exportMembersCsv(kind: string): void {
+  if (kind === "permanent") {
+    downloadTextFile(
+      "ips-permanent-members.csv",
+      toCsv(
+        ["name", "membershipNo", "isFounder"],
+        content.permanentMembers.map((m) => [
+          m.name,
+          String(m.membershipNo),
+          m.isFounder ? "true" : "false",
+        ]),
+      ),
+    );
+    return;
+  }
+  if (kind === "executive") {
+    downloadTextFile(
+      "ips-executive-members.csv",
+      toCsv(
+        ["name", "role", "affiliation", "image"],
+        getExecutives().map((m) => [m.name, m.role, m.affiliation, m.image ?? ""]),
+      ),
+    );
+    return;
+  }
+  if (kind === "attendees") {
+    downloadTextFile(
+      "ips-symposium-attendees.csv",
+      toCsv(
+        ["name", "affiliation", "symposiumYear", "symposiumTitle"],
+        content.symposiumAttendees.map((m) => [
+          m.name,
+          m.affiliation ?? "",
+          String(m.symposiumYear),
+          m.symposiumTitle ?? "",
+        ]),
+      ),
+    );
+    return;
+  }
+  if (kind === "recognized") {
+    downloadTextFile(
+      "ips-recognised-people.csv",
+      toCsv(
+        ["name", "honor", "year", "affiliation"],
+        content.recognizedPeople.map((m) => [
+          m.name,
+          m.honor,
+          m.year ?? "",
+          m.affiliation ?? "",
+        ]),
+      ),
+    );
+  }
+}
+
+function downloadMembersTemplate(kind: string): void {
+  const templates: Record<string, { file: string; headers: string[]; sample: string[] }> = {
+    permanent: {
+      file: "ips-permanent-members-template.csv",
+      headers: ["name", "membershipNo", "isFounder"],
+      sample: ["Dr. Example Name", "101", "false"],
+    },
+    executive: {
+      file: "ips-executive-members-template.csv",
+      headers: ["name", "role", "affiliation", "image"],
+      sample: ["Prof. Example", "Secretary — IPS", "IISER Pune", ""],
+    },
+    attendees: {
+      file: "ips-symposium-attendees-template.csv",
+      headers: ["name", "affiliation", "symposiumYear", "symposiumTitle"],
+      sample: ["Dr. Example", "IIT Bombay", "2026", "10th Indian Peptide Symposium"],
+    },
+    recognized: {
+      file: "ips-recognised-people-template.csv",
+      headers: ["name", "honor", "year", "affiliation"],
+      sample: ["Prof. Example", "Lifetime Achievement Award", "2024", "IISc Bengaluru"],
+    },
+  };
+  const t = templates[kind];
+  if (!t) return;
+  downloadTextFile(t.file, toCsv(t.headers, [t.sample]));
+}
+
+function importMembersCsv(kind: string, text: string): number {
+  const { rows } = parseCsv(text);
+  if (!rows.length) throw new Error("CSV has no data rows.");
+
+  if (kind === "permanent") {
+    const imported = rows
+      .map((r) => ({
+        name: r.name || r.Name || "",
+        membershipNo: Number(r.membershipNo || r.MembershipNo || r.membership_no) || 0,
+        isFounder: /^(true|1|yes)$/i.test(r.isFounder || r.IsFounder || ""),
+      }))
+      .filter((m) => m.name);
+    if (!imported.length) throw new Error("No valid permanent members found. Need columns: name, membershipNo, isFounder.");
+    content.permanentMembers = imported;
+    return imported.length;
+  }
+
+  if (kind === "executive") {
+    const imported = rows
+      .map((r) => ({
+        name: r.name || r.Name || "",
+        role: r.role || r.Role || "",
+        affiliation: r.affiliation || r.Affiliation || "",
+        image: r.image || r.Image || "",
+        section: "executive" as const,
+      }))
+      .filter((m) => m.name);
+    if (!imported.length) throw new Error("No valid executive members found.");
+    setExecutives(imported);
+    return imported.length;
+  }
+
+  if (kind === "attendees") {
+    const imported = rows
+      .map((r) => ({
+        name: r.name || r.Name || "",
+        affiliation: r.affiliation || r.Affiliation || undefined,
+        symposiumYear: Number(r.symposiumYear || r.year || r.Year) || new Date().getFullYear(),
+        symposiumTitle: r.symposiumTitle || r.title || undefined,
+      }))
+      .filter((m) => m.name);
+    if (!imported.length) throw new Error("No valid attendees found.");
+    content.symposiumAttendees = imported;
+    return imported.length;
+  }
+
+  if (kind === "recognized") {
+    const imported = rows
+      .map((r) => ({
+        name: r.name || r.Name || "",
+        honor: r.honor || r.Honor || "",
+        year: r.year || r.Year || undefined,
+        affiliation: r.affiliation || r.Affiliation || undefined,
+      }))
+      .filter((m) => m.name && m.honor);
+    if (!imported.length) throw new Error("No valid recognised people found.");
+    content.recognizedPeople = imported;
+    return imported.length;
+  }
+
+  throw new Error("Unknown member list.");
+}
+
 function bindPanelEvents(): void {
   const panel = document.getElementById("dashboard-panel");
   if (!panel) return;
@@ -1058,6 +1403,50 @@ function bindPanelEvents(): void {
     btn.addEventListener("click", () => {
       regFilter = ((btn as HTMLElement).dataset.regFilter as typeof regFilter) || "all";
       renderPanel();
+    });
+  });
+
+  panel.querySelector<HTMLSelectElement>("[data-reg-year]")?.addEventListener("change", (e) => {
+    regYear = (e.target as HTMLSelectElement).value;
+    renderPanel();
+  });
+
+  panel.querySelector<HTMLSelectElement>("[data-reg-month]")?.addEventListener("change", (e) => {
+    regMonth = (e.target as HTMLSelectElement).value;
+    renderPanel();
+  });
+
+  panel.querySelectorAll("[data-csv-export]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const kind = (btn.closest("[data-csv-kind]") as HTMLElement | null)?.dataset.csvKind || "";
+      exportMembersCsv(kind);
+      showStatus("CSV exported.");
+    });
+  });
+
+  panel.querySelectorAll("[data-csv-template]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const kind = (btn.closest("[data-csv-kind]") as HTMLElement | null)?.dataset.csvKind || "";
+      downloadMembersTemplate(kind);
+      showStatus("Template downloaded.");
+    });
+  });
+
+  panel.querySelectorAll<HTMLInputElement>("[data-csv-import]").forEach((input) => {
+    input.addEventListener("change", async () => {
+      const kind = (input.closest("[data-csv-kind]") as HTMLElement | null)?.dataset.csvKind || "";
+      const file = input.files?.[0];
+      if (!file || !kind) return;
+      try {
+        const text = await readFileAsText(file);
+        const count = importMembersCsv(kind, text);
+        saveContent(content);
+        renderPanel();
+        showStatus(`Imported ${count} rows from CSV.`);
+      } catch (err) {
+        showStatus(err instanceof Error ? err.message : "Import failed.", true);
+      }
+      input.value = "";
     });
   });
 
@@ -1163,21 +1552,263 @@ function showStatus(msg: string, isError = false): void {
   }, 3000);
 }
 
-document.getElementById("btn-save")?.addEventListener("click", () => {
-  collectInlineFields();
-  saveContent(content);
-  showStatus("Changes saved successfully.");
-});
+let dashboardBooted = false;
 
-document.getElementById("btn-reset")?.addEventListener("click", () => {
-  if (!confirm("Reset all content to defaults? This cannot be undone.")) return;
-  content = resetContent();
-  closeModal();
+function showEl(id: string, visible: boolean): void {
+  const el = document.getElementById(id);
+  if (el) el.hidden = !visible;
+}
+
+function setMsg(id: string, text: string, show: boolean): void {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.hidden = !show;
+}
+
+function bootDashboard(email: string): void {
+  if (dashboardBooted) return;
+  dashboardBooted = true;
+
+  const emailEl = document.getElementById("dash-user-email");
+  if (emailEl) emailEl.textContent = email;
+
+  document.getElementById("btn-save")?.addEventListener("click", () => {
+    collectInlineFields();
+    saveContent(content);
+    showStatus("Changes saved successfully.");
+  });
+
+  document.getElementById("btn-reset")?.addEventListener("click", () => {
+    if (!confirm("Reset all content to defaults? This cannot be undone.")) return;
+    content = resetContent();
+    closeModal();
+    renderPanel();
+    showStatus("Content reset to defaults.");
+  });
+
+  document.getElementById("btn-signout")?.addEventListener("click", async () => {
+    await signOut();
+    window.location.reload();
+  });
+
+  bindModalEvents();
+  renderNav();
+  renderBreadcrumb();
   renderPanel();
-  showStatus("Content reset to defaults.");
-});
+}
 
-bindModalEvents();
-renderNav();
-renderBreadcrumb();
-renderPanel();
+/** Default signed-out view: login only (forgot-password form stays hidden until clicked). */
+function showSignedOut(): void {
+  showEl("dash-app", false);
+  showEl("dash-set-password", false);
+  showEl("dash-auth", true);
+
+  const loginForm = document.getElementById("dash-login-form") as HTMLFormElement | null;
+  const resetForm = document.getElementById("dash-reset-form") as HTMLFormElement | null;
+  const showReset = document.getElementById("dash-show-reset");
+  const showLogin = document.getElementById("dash-show-login");
+  if (loginForm) loginForm.hidden = false;
+  if (resetForm) resetForm.hidden = true;
+  if (showReset) showReset.hidden = false;
+  if (showLogin) showLogin.hidden = true;
+}
+
+function showForgotPassword(): void {
+  showEl("dash-app", false);
+  showEl("dash-set-password", false);
+  showEl("dash-auth", true);
+
+  const loginForm = document.getElementById("dash-login-form") as HTMLFormElement | null;
+  const resetForm = document.getElementById("dash-reset-form") as HTMLFormElement | null;
+  const showReset = document.getElementById("dash-show-reset");
+  const showLogin = document.getElementById("dash-show-login");
+  if (loginForm) loginForm.hidden = true;
+  if (resetForm) resetForm.hidden = false;
+  if (showReset) showReset.hidden = true;
+  if (showLogin) showLogin.hidden = false;
+}
+
+function showSignedIn(email: string): void {
+  clearPasswordRecovery();
+  showEl("dash-auth", false);
+  showEl("dash-set-password", false);
+  showEl("dash-app", true);
+  bootDashboard(email);
+  const bar = document.querySelector(".top-bar");
+  if (bar) {
+    import("./layout").then(({ renderTopBar }) => {
+      bar.outerHTML = renderTopBar({ showDashboard: true });
+    });
+  }
+}
+
+/** Only after clicking the email reset link (never on normal visits). */
+function showSetPassword(): void {
+  markPasswordRecovery();
+  showEl("dash-auth", false);
+  showEl("dash-app", false);
+  showEl("dash-set-password", true);
+}
+
+function inPasswordRecoveryFlow(): boolean {
+  return isPasswordResetReturn();
+}
+
+function bindAuthForms(): void {
+  const loginForm = document.getElementById("dash-login-form") as HTMLFormElement | null;
+  const resetForm = document.getElementById("dash-reset-form") as HTMLFormElement | null;
+  const passwordForm = document.getElementById("dash-password-form") as HTMLFormElement | null;
+  const showReset = document.getElementById("dash-show-reset");
+  const showLogin = document.getElementById("dash-show-login");
+
+  showReset?.addEventListener("click", () => {
+    showForgotPassword();
+    setMsg("dash-login-error", "", false);
+    setMsg("dash-reset-error", "", false);
+    setMsg("dash-reset-ok", "", false);
+    const loginEmail = (loginForm?.querySelector('[name="email"]') as HTMLInputElement | null)?.value;
+    const resetEmail = resetForm?.querySelector('[name="email"]') as HTMLInputElement | null;
+    if (resetEmail && loginEmail) resetEmail.value = loginEmail;
+  });
+
+  showLogin?.addEventListener("click", () => {
+    showSignedOut();
+    setMsg("dash-reset-error", "", false);
+    setMsg("dash-reset-ok", "", false);
+  });
+
+  loginForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!authReady()) {
+      setMsg("dash-login-error", "Supabase is not configured. Check .env keys.", true);
+      return;
+    }
+    clearPasswordRecovery();
+    const data = new FormData(loginForm);
+    const email = String(data.get("email") ?? "").trim();
+    const password = String(data.get("password") ?? "");
+    setMsg("dash-login-error", "", false);
+    const { error } = await signInWithPassword(email, password);
+    if (error) {
+      setMsg("dash-login-error", error.message, true);
+      return;
+    }
+    const session = await getSession();
+    if (session?.user.email) showSignedIn(session.user.email);
+  });
+
+  resetForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!authReady()) {
+      setMsg("dash-reset-error", "Supabase is not configured. Check .env keys.", true);
+      return;
+    }
+    const data = new FormData(resetForm);
+    const email = String(data.get("email") ?? "").trim();
+    setMsg("dash-reset-error", "", false);
+    setMsg("dash-reset-ok", "", false);
+    // Stay on forgot-password form — do NOT open set-password until email link is used
+    const { error } = await requestPasswordReset(email, passwordResetRedirectUrl());
+    if (error) {
+      setMsg("dash-reset-error", error.message, true);
+      return;
+    }
+    setMsg(
+      "dash-reset-ok",
+      "Reset link sent. Check your email, then use the link to choose a new password.",
+      true,
+    );
+  });
+
+  document.getElementById("dash-cancel-reset")?.addEventListener("click", async () => {
+    clearPasswordRecovery();
+    await signOut();
+    showSignedOut();
+  });
+
+  passwordForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!inPasswordRecoveryFlow()) {
+      showSignedOut();
+      return;
+    }
+    const data = new FormData(passwordForm);
+    const password = String(data.get("password") ?? "");
+    const confirm = String(data.get("confirm") ?? "");
+    setMsg("dash-password-error", "", false);
+    if (password.length < 8) {
+      setMsg("dash-password-error", "Password must be at least 8 characters.", true);
+      return;
+    }
+    if (password !== confirm) {
+      setMsg("dash-password-error", "Passwords do not match.", true);
+      return;
+    }
+    const { error } = await updatePassword(password);
+    if (error) {
+      setMsg("dash-password-error", error.message, true);
+      return;
+    }
+    clearPasswordRecovery();
+    const session = await getSession();
+    showSignedIn(session?.user.email ?? "");
+  });
+}
+
+async function initDashboardAuth(): Promise<void> {
+  injectLayout("dashboard");
+  initMobileMenu();
+  bindAuthForms();
+
+  // Never show set-password on a normal visit
+  pruneStalePasswordRecovery();
+  showEl("dash-set-password", false);
+
+  if (!authReady()) {
+    showSignedOut();
+    setMsg("dash-login-error", "Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.", true);
+    return;
+  }
+
+  onAuthStateChange((event, session) => {
+    // Recovery session from email link only
+    if (event === "PASSWORD_RECOVERY") {
+      showSetPassword();
+      return;
+    }
+
+    // PKCE sometimes reports SIGNED_IN for recovery — only honor if ?reset=1 / recovery flag
+    if (session?.user && inPasswordRecoveryFlow() && (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED")) {
+      showSetPassword();
+      return;
+    }
+
+    // Mid recovery: keep set-password until they finish (don't jump to dashboard)
+    if (inPasswordRecoveryFlow() && session?.user) {
+      showSetPassword();
+      return;
+    }
+
+    if (session?.user) showSignedIn(session.user.email ?? "");
+    else showSignedOut();
+  });
+
+  // Give Supabase a moment to exchange ?code= from the email link
+  await new Promise((r) => setTimeout(r, 50));
+  const session = await getSession();
+
+  if (inPasswordRecoveryFlow() && session?.user) {
+    showSetPassword();
+  } else if (inPasswordRecoveryFlow() && !session?.user) {
+    // Landed with ?reset=1 but session not ready yet — wait for onAuthStateChange
+    showSignedOut();
+    setMsg("dash-login-error", "", false);
+  } else if (session?.user) {
+    showSignedIn(session.user.email ?? "");
+  } else {
+    showSignedOut();
+  }
+}
+
+void initDashboardAuth();

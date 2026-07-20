@@ -1,7 +1,22 @@
 import { loadContent, saveContent, newId, escapeHtml } from "../data/store";
 import { abstractStoragePath, fileToAbstractPayload } from "../lib/abstract-file";
 import { buildReceiptNumber, downloadReceipt, openReceiptForPrint } from "../lib/receipt";
-import type { SymposiumRegistration } from "../domain/types";
+import type { SiteContent, SymposiumRegistration } from "../domain/types";
+
+function buildSymposiumTicker(data: SiteContent): string {
+  const reg = data.symposiumRegistration;
+  if (reg.enabled && (reg.title || reg.dates || reg.venue)) {
+    const title = reg.title || "Indian Peptide Symposium";
+    const dates = reg.dates ? ` from ${reg.dates}` : "";
+    const venue = reg.venue ? ` at ${reg.venue}` : "";
+    return `${title} will be held${dates}${venue}. Register online — stay tuned for updates!`;
+  }
+  const upcoming = data.upcomingSymposia[0];
+  if (upcoming) {
+    return `${upcoming.title} — ${upcoming.dates}${upcoming.venue ? `, ${upcoming.venue}` : ""}. Stay tuned!`;
+  }
+  return data.announcement.ticker;
+}
 
 const SERVICE_ICONS = [
   `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>`,
@@ -62,15 +77,22 @@ export function renderHomePage(): void {
       <p><strong>Coordinator:</strong> ${escapeHtml(data.announcement.coordinator)}</p>`;
   }
   if (ctaWrap) {
+    const parts: string[] = [];
+    if (data.symposiumRegistration.enabled) {
+      parts.push(
+        `<a href="#symposium-registration" class="btn btn--announcement" data-scroll-to="symposium-registration">Register</a>`,
+      );
+    }
     const { cta, ctaUrl, showCtaButton } = data.announcement;
     if (showCtaButton && ctaUrl) {
-      ctaWrap.innerHTML = `<a href="${escapeHtml(ctaUrl)}" class="btn btn--announcement">${escapeHtml(cta || "Learn more")}</a>`;
-    } else {
-      ctaWrap.innerHTML = "";
+      parts.push(
+        `<a href="${escapeHtml(ctaUrl)}" class="btn btn--announcement btn--announcement-secondary">${escapeHtml(cta || "Learn more")}</a>`,
+      );
     }
+    ctaWrap.innerHTML = parts.join("");
   }
   if (ticker) {
-    const text = escapeHtml(data.announcement.ticker);
+    const text = escapeHtml(buildSymposiumTicker(data));
     ticker.innerHTML = `<span>${text}</span><span>${text}</span><span>${text}</span><span>${text}</span>`;
   }
 

@@ -9,7 +9,7 @@ export const defaultContent: SiteContent = {
     cta: "Stay tuned for updates.",
     ctaUrl: "",
     showCtaButton: false,
-    ticker: "The 11th Indian Peptide Symposium will be held from 25–27 February 2027 at IIT Gandhinagar, Gujarat: Stay tuned!",
+    ticker: "Symposium Registration will be held from February 25–27, 2027 at IIT Gandhinagar, Gandhinagar, Gujarat. Register online — stay tuned for updates!",
   },
   news: [
     { tag: "Symposium", date: "Feb 2027", title: "11th Indian Peptide Symposium", excerpt: "Join us at IIT Gandhinagar, Gujarat from 25–27 February 2027 for the premier peptide science gathering in India.", image: "" },
@@ -179,7 +179,7 @@ export const defaultContent: SiteContent = {
     venue: "IIT Gandhinagar, Gandhinagar, Gujarat",
     feeNote: "Registration fee details will be confirmed with the Razorpay payment link.",
     razorpayUrl: "",
-    ctaLabel: "Register & Pay",
+    ctaLabel: "Register",
   },
   contactMessages: [],
   symposiumRegistrations: [

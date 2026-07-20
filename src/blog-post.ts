@@ -68,6 +68,7 @@ function initBlogPostPage(): void {
   const excerptEl = document.getElementById("blog-post-excerpt");
   const bodyEl = document.getElementById("blog-post-body");
   const navEl = document.getElementById("blog-outline-nav");
+  const coverEl = document.getElementById("blog-post-cover");
 
   if (!titleEl || !metaEl || !excerptEl || !bodyEl || !navEl) return;
 
@@ -77,6 +78,7 @@ function initBlogPostPage(): void {
     excerptEl.textContent = "This article is unavailable.";
     bodyEl.innerHTML = `<p><a href="/blog.html">Return to the blog</a></p>`;
     navEl.innerHTML = "";
+    if (coverEl) coverEl.hidden = true;
     return;
   }
 
@@ -85,6 +87,15 @@ function initBlogPostPage(): void {
   metaEl.innerHTML = `<span>${escapeHtml(post.tag)}</span><span aria-hidden="true">·</span><time>${escapeHtml(post.date)}</time>`;
   excerptEl.textContent = post.excerpt;
   bodyEl.innerHTML = post.body;
+  if (coverEl) {
+    if (post.coverImage) {
+      coverEl.hidden = false;
+      coverEl.innerHTML = `<img src="${escapeHtml(post.coverImage)}" alt="" />`;
+    } else {
+      coverEl.hidden = true;
+      coverEl.innerHTML = "";
+    }
+  }
   buildOutline(bodyEl, navEl);
 }
 

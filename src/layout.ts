@@ -1,4 +1,12 @@
-export type PageId = "home" | "membership" | "members" | "events" | "blog" | "faq" | "contact";
+export type PageId =
+  | "home"
+  | "membership"
+  | "members"
+  | "events"
+  | "blog"
+  | "faq"
+  | "contact"
+  | "dashboard";
 
 const SOCIAL = {
   facebook: "https://www.facebook.com/indianpeptidesociety/",
@@ -44,7 +52,17 @@ function socialIcons(size = 16): string {
     </a>`;
 }
 
-export function renderTopBar(): string {
+export function renderTopBar(opts?: { showDashboard?: boolean }): string {
+  const showDashboard = Boolean(opts?.showDashboard);
+  const dashboardLink = showDashboard
+    ? `
+          <span class="top-bar__divider"></span>
+          <a href="/dashboard.html" class="top-bar__dashboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span>Dashboard</span>
+          </a>`
+    : "";
+
   return `
     <div class="top-bar">
       <div class="container top-bar__inner">
@@ -57,12 +75,7 @@ export function renderTopBar(): string {
           <a href="mailto:indianpeptidesociety@gmail.com" class="top-bar__email">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
             <span>indianpeptidesociety@gmail.com</span>
-          </a>
-          <span class="top-bar__divider"></span>
-          <a href="/dashboard.html" class="top-bar__dashboard">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            <span>Dashboard</span>
-          </a>
+          </a>${dashboardLink}
           <span class="top-bar__divider"></span>
           <a href="/membership.html#signin" class="top-bar__signin">Sign In</a>
         </div>
@@ -147,12 +160,25 @@ export function renderFooter(): string {
     </footer>`;
 }
 
+async function refreshTopBarAuth(): Promise<void> {
+  try {
+    const { authReady, getSession } = await import("./auth/session");
+    if (!authReady()) return;
+    const session = await getSession();
+    const bar = document.querySelector(".top-bar");
+    if (bar) bar.outerHTML = renderTopBar({ showDashboard: Boolean(session?.user) });
+  } catch {
+    /* keep top bar without dashboard link */
+  }
+}
+
 export function injectLayout(active: PageId): void {
   const topBar = document.getElementById("top-bar-mount");
   const header = document.getElementById("header-mount");
   const footer = document.getElementById("footer-mount");
 
-  if (topBar) topBar.outerHTML = renderTopBar();
+  if (topBar) topBar.outerHTML = renderTopBar({ showDashboard: false });
   if (header) header.outerHTML = renderHeader(active);
   if (footer) footer.outerHTML = renderFooter();
+  void refreshTopBarAuth();
 }
