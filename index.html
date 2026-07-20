@@ -113,6 +113,77 @@
         </div>
       </section>
 
+      <!-- Symposium Registration -->
+      <section id="symposium-registration" class="symp-reg section section--cream" hidden>
+        <div class="container symp-reg__grid">
+          <div class="symp-reg__intro">
+            <p class="section-label">Register</p>
+            <h2 class="heading-md" id="symp-reg-title">Symposium Registration</h2>
+            <div class="section-line section-line--left"></div>
+            <p class="symp-reg__subtitle" id="symp-reg-subtitle"></p>
+            <div class="symp-reg__details" id="symp-reg-details"></div>
+            <p class="symp-reg__fee" id="symp-reg-fee"></p>
+          </div>
+          <div class="symp-reg__form-wrap">
+            <form id="symposium-reg-form" class="symp-reg-form">
+              <div class="form-group">
+                <label for="reg-name">Full name</label>
+                <input id="reg-name" name="name" type="text" required autocomplete="name" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="reg-email">Email</label>
+                  <input id="reg-email" name="email" type="email" required autocomplete="email" />
+                </div>
+                <div class="form-group">
+                  <label for="reg-phone">Phone</label>
+                  <input id="reg-phone" name="phone" type="tel" required autocomplete="tel" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="reg-affiliation">Affiliation / Institution</label>
+                <input id="reg-affiliation" name="affiliation" type="text" required />
+              </div>
+              <div class="form-group">
+                <label for="reg-category">Category</label>
+                <select id="reg-category" name="category" required>
+                  <option value="">Select category</option>
+                  <option value="Student">Student</option>
+                  <option value="Academia">Academia</option>
+                  <option value="Industry">Industry</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="reg-abstract-title">Abstract title <span class="form-optional">(optional)</span></label>
+                <input id="reg-abstract-title" name="abstractTitle" type="text" placeholder="Title of your abstract" />
+              </div>
+              <div class="form-group">
+                <label for="reg-abstract-file">Upload abstract <span class="form-optional">(optional)</span></label>
+                <input
+                  id="reg-abstract-file"
+                  name="abstractFile"
+                  type="file"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                />
+                <p class="form-hint">PDF or Word, max 5&nbsp;MB. Stored securely; visible in the admin dashboard.</p>
+              </div>
+              <button type="submit" class="btn btn--primary btn--full" id="symp-reg-submit">Register &amp; Pay</button>
+              <p class="symp-reg__hint">After submitting, you can download a receipt. Razorpay payment opens when the link is configured.</p>
+            </form>
+            <div id="symposium-reg-success" class="contact-success" hidden>
+              <p class="contact-success__title">Registration received</p>
+              <p id="symposium-reg-success-msg">Thank you. We have recorded your details.</p>
+              <div class="symp-reg__receipt-actions" id="symposium-reg-receipt-actions" hidden>
+                <button type="button" class="btn btn--primary" id="btn-download-receipt">Download receipt</button>
+                <button type="button" class="btn btn--outline" id="btn-print-receipt">Print / Save PDF</button>
+              </div>
+              <p class="symp-reg__receipt-hint" id="symposium-reg-receipt-hint"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- News -->
       <section class="news section">
         <div class="container">

@@ -5,18 +5,27 @@ import {
   type SiteContent,
   type SymposiumEvent,
   type NewsItem,
-  type FounderMember,
-  type DirectoryMember,
+  type PermanentMember,
+  type SymposiumAttendee,
+  type RecognizedPerson,
+  type BlogPost,
+  type TeamMember,
 } from "./data/store";
 
 type SectionId =
   | "announcement"
   | "news"
+  | "reg-settings"
+  | "reg-entries"
   | "events-upcoming"
   | "events-past"
   | "events-student"
-  | "members-directory"
-  | "members-founders";
+  | "members-permanent"
+  | "members-executive"
+  | "members-attendees"
+  | "members-recognized"
+  | "blog"
+  | "inbox-contact";
 
 interface NavItem {
   id: SectionId;
@@ -110,20 +119,41 @@ function formatNewsMonth(monthIso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
 
+function formatSubmittedAt(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 const NAV: NavItem[] = [
   { id: "announcement", label: "Announcement", breadcrumb: ["Dashboard", "Home", "Announcement"] },
   { id: "news", label: "News", breadcrumb: ["Dashboard", "Home", "News"] },
+  { id: "reg-settings", label: "Registration Settings", breadcrumb: ["Dashboard", "Registration", "Settings"] },
+  { id: "reg-entries", label: "Registrations", breadcrumb: ["Dashboard", "Registration", "Entries"] },
   { id: "events-upcoming", label: "Upcoming Symposia", breadcrumb: ["Dashboard", "Events", "Upcoming"] },
   { id: "events-past", label: "Past Symposia", breadcrumb: ["Dashboard", "Events", "Past"] },
   { id: "events-student", label: "Student Symposia", breadcrumb: ["Dashboard", "Events", "Student"] },
-  { id: "members-directory", label: "Directory", breadcrumb: ["Dashboard", "Members", "Directory"] },
-  { id: "members-founders", label: "Founder Members", breadcrumb: ["Dashboard", "Members", "Founders"] },
+  { id: "members-permanent", label: "Permanent Members", breadcrumb: ["Dashboard", "Members", "Permanent"] },
+  { id: "members-executive", label: "Executive Members", breadcrumb: ["Dashboard", "Members", "Executive"] },
+  { id: "members-attendees", label: "Symposium Attendees", breadcrumb: ["Dashboard", "Members", "Attendees"] },
+  { id: "members-recognized", label: "Recognised People", breadcrumb: ["Dashboard", "Members", "Recognised"] },
+  { id: "blog", label: "Blog Posts", breadcrumb: ["Dashboard", "Blog", "Posts"] },
+  { id: "inbox-contact", label: "Contact Messages", breadcrumb: ["Dashboard", "Inbox", "Contact"] },
 ];
 
 const NAV_GROUPS: { label: string; items: SectionId[] }[] = [
   { label: "Home", items: ["announcement", "news"] },
+  { label: "Registration", items: ["reg-settings", "reg-entries"] },
   { label: "Events", items: ["events-upcoming", "events-past", "events-student"] },
-  { label: "Members", items: ["members-directory", "members-founders"] },
+  { label: "Members", items: ["members-permanent", "members-executive", "members-attendees", "members-recognized"] },
+  { label: "Blog", items: ["blog"] },
+  { label: "Inbox", items: ["inbox-contact"] },
 ];
 
 const SYM_KEYS = {
@@ -135,6 +165,15 @@ const SYM_KEYS = {
 let content = loadContent();
 let activeSection: SectionId = "announcement";
 let modalIndex: number | "new" | null = null;
+
+function getExecutives(): TeamMember[] {
+  return content.team.filter((m) => m.section === "executive");
+}
+
+function setExecutives(executives: TeamMember[]): void {
+  const advisors = content.team.filter((m) => m.section === "advisors");
+  content.team = [...executives, ...advisors];
+}
 
 function esc(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
@@ -156,11 +195,19 @@ function panelHead(title: string, desc: string, addLabel?: string): string {
     </div>`;
 }
 
-function listRow(title: string, meta: string, index: number, canReorder: boolean): string {
+function listRow(
+  title: string,
+  meta: string,
+  index: number,
+  canReorder: boolean,
+  opts?: { editLabel?: string; canDelete?: boolean },
+): string {
   const reorder = canReorder
     ? `<button type="button" data-move="up" data-index="${index}" aria-label="Move up">↑</button>
        <button type="button" data-move="down" data-index="${index}" aria-label="Move down">↓</button>`
     : "";
+  const editLabel = opts?.editLabel ?? "Edit";
+  const canDelete = opts?.canDelete ?? canReorder;
   return `
     <div class="dash-row" data-index="${index}">
       <div class="dash-row__info">
@@ -169,8 +216,8 @@ function listRow(title: string, meta: string, index: number, canReorder: boolean
       </div>
       <div class="dash-row__actions">
         ${reorder}
-        <button type="button" class="dash-edit" data-edit="${index}">${EDIT_ICON}<span>Edit</span></button>
-        ${canReorder ? `<button type="button" class="dash-delete" data-delete="${index}">Delete</button>` : ""}
+        <button type="button" class="dash-edit" data-edit="${index}">${EDIT_ICON}<span>${editLabel}</span></button>
+        ${canDelete ? `<button type="button" class="dash-delete" data-delete="${index}">Delete</button>` : ""}
       </div>
     </div>`;
 }
@@ -203,12 +250,19 @@ function renderSymposia(key: "upcomingSymposia" | "pastSymposia" | "pastStudentS
     <div class="dash-list">${items}</div>`;
 }
 
-function renderDirectory(): string {
-  const items = content.directoryMembers
-    .map((item, i) => listRow(item.name, `Membership No. ${item.membershipNo}`, i, true))
+function renderPermanent(): string {
+  const items = content.permanentMembers
+    .map((item, i) =>
+      listRow(
+        item.name,
+        `No. ${item.membershipNo}${item.isFounder ? " · Founder" : ""}`,
+        i,
+        true,
+      ),
+    )
     .join("");
   return `
-    ${panelHead("Member Directory", "Members listed on the members page.", "+ Add member")}
+    ${panelHead("Permanent Members", "Permanent members tab — founders show a Founder badge.", "+ Add member")}
     <div class="dash-inline-field">
       <label for="total-members">Total members</label>
       <input type="number" id="total-members" value="${content.totalMembers}" />
@@ -216,13 +270,119 @@ function renderDirectory(): string {
     <div class="dash-list">${items}</div>`;
 }
 
-function renderFounders(): string {
-  const items = content.founderMembers
-    .map((item, i) => listRow(item.name, `${item.title} · ${item.role}`, i, true))
+function renderExecutive(): string {
+  const items = getExecutives()
+    .map((item, i) => listRow(item.name, `${item.role} · ${item.affiliation}`, i, true))
     .join("");
   return `
-    ${panelHead("Founder Members", "Founder members tab on the members page.", "+ Add founder")}
+    ${panelHead("Executive Members", "Office bearers on the members page and home team section.", "+ Add executive")}
     <div class="dash-list">${items}</div>`;
+}
+
+function renderAttendees(): string {
+  const items = content.symposiumAttendees
+    .map((item, i) =>
+      listRow(
+        item.name,
+        `${item.symposiumYear}${item.affiliation ? ` · ${item.affiliation}` : ""}`,
+        i,
+        true,
+      ),
+    )
+    .join("");
+  return `
+    ${panelHead("Symposium Attendees", "One symposium per year — filterable by year on the members page.", "+ Add attendee")}
+    <div class="dash-list">${items}</div>`;
+}
+
+function renderRecognized(): string {
+  const items = content.recognizedPeople
+    .map((item, i) =>
+      listRow(item.name, `${item.honor}${item.year ? ` · ${item.year}` : ""}`, i, true),
+    )
+    .join("");
+  return `
+    ${panelHead("Recognised People", "Lifetime Achievement and Young Scientist honorees.", "+ Add person")}
+    <div class="dash-list">${items}</div>`;
+}
+
+function renderBlog(): string {
+  const items = content.blogPosts
+    .map((item, i) => listRow(item.title, `${item.tag} · ${item.date} · ${item.slug}`, i, true))
+    .join("");
+  return `
+    ${panelHead("Blog Posts", "Medium-style articles on the blog page. Body supports HTML (p, h2, h3).", "+ Add post")}
+    <div class="dash-list">${items}</div>`;
+}
+
+function renderRegSettings(): string {
+  const r = content.symposiumRegistration;
+  const status = r.enabled ? "Visible on home" : "Hidden";
+  const pay = r.razorpayUrl ? "Razorpay link set" : "Razorpay link not set yet";
+  return `
+    ${panelHead("Registration Settings", "Home page symposium registration section. Add Razorpay payment URL when ready.")}
+    <div class="dash-list">
+      ${listRow(r.title || "Symposium Registration", `${status} · ${pay} · ${r.dates}`, 0, false)}
+    </div>`;
+}
+
+let regFilter: "all" | "abstracts" | "no-abstract" = "all";
+
+function renderRegEntries(): string {
+  const all = content.symposiumRegistrations;
+  const withAbstract = all.filter((r) => r.hasAbstract || Boolean(r.abstractFileName));
+  const filtered =
+    regFilter === "abstracts"
+      ? withAbstract
+      : regFilter === "no-abstract"
+        ? all.filter((r) => !(r.hasAbstract || r.abstractFileName))
+        : all;
+
+  const rows = filtered.length
+    ? filtered
+        .map((item) => {
+          const i = all.indexOf(item);
+          const pay = (item.paymentStatus ?? "pending").toUpperCase();
+          const abs = item.hasAbstract || item.abstractFileName ? " · Abstract" : "";
+          return listRow(
+            item.name,
+            `${pay}${abs} · ${item.category} · ${item.email} · ${formatSubmittedAt(item.submittedAt)}`,
+            i,
+            false,
+            { editLabel: "View", canDelete: true },
+          );
+        })
+        .join("")
+    : `<p class="dash-empty">No registrations in this filter.</p>`;
+
+  return `
+    ${panelHead("Registrations", `Form submissions (${all.length}). ${withAbstract.length} with abstract. Filter below; download receipts from View.`)}
+    <div class="dash-filter-bar" role="group" aria-label="Filter registrations">
+      <button type="button" class="dash-filter${regFilter === "all" ? " is-active" : ""}" data-reg-filter="all">All (${all.length})</button>
+      <button type="button" class="dash-filter${regFilter === "abstracts" ? " is-active" : ""}" data-reg-filter="abstracts">With abstract (${withAbstract.length})</button>
+      <button type="button" class="dash-filter${regFilter === "no-abstract" ? " is-active" : ""}" data-reg-filter="no-abstract">No abstract (${all.length - withAbstract.length})</button>
+    </div>
+    <div class="dash-list">${rows}</div>`;
+}
+
+function renderContactInbox(): string {
+  const items = content.contactMessages;
+  const rows = items.length
+    ? items
+        .map((item, i) =>
+          listRow(
+            item.name,
+            `${item.email} · ${formatSubmittedAt(item.submittedAt)}`,
+            i,
+            false,
+            { editLabel: "View", canDelete: true },
+          ),
+        )
+        .join("")
+    : `<p class="dash-empty">No contact messages yet.</p>`;
+  return `
+    ${panelHead("Contact Messages", `Submissions from the Contact Us form (${items.length}).`)}
+    <div class="dash-list">${rows}</div>`;
 }
 
 function renderPanel(): void {
@@ -232,11 +392,17 @@ function renderPanel(): void {
   const map: Record<SectionId, () => string> = {
     announcement: renderAnnouncement,
     news: renderNews,
+    "reg-settings": renderRegSettings,
+    "reg-entries": renderRegEntries,
     "events-upcoming": () => renderSymposia("upcomingSymposia", "Upcoming Symposia", "Events page — upcoming tab."),
     "events-past": () => renderSymposia("pastSymposia", "Past Symposia", "Events page — past tab."),
     "events-student": () => renderSymposia("pastStudentSymposia", "Past Student Symposia", "Events page — student tab."),
-    "members-directory": renderDirectory,
-    "members-founders": renderFounders,
+    "members-permanent": renderPermanent,
+    "members-executive": renderExecutive,
+    "members-attendees": renderAttendees,
+    "members-recognized": renderRecognized,
+    blog: renderBlog,
+    "inbox-contact": renderContactInbox,
   };
 
   panel.innerHTML = map[activeSection]();
@@ -293,7 +459,7 @@ function renderNav(): void {
 }
 
 function collectInlineFields(): void {
-  if (activeSection === "members-directory") {
+  if (activeSection === "members-permanent") {
     const totalEl = document.getElementById("total-members") as HTMLInputElement | null;
     if (totalEl) content.totalMembers = Number(totalEl.value) || 352;
   }
@@ -340,17 +506,88 @@ function getModalFields(): FormField[] {
       { key: "venue", label: "Venue" },
     ];
   }
-  if (activeSection === "members-directory") {
+  if (activeSection === "members-permanent") {
     return [
       { key: "name", label: "Name" },
       { key: "membershipNo", label: "Membership No.", type: "number" },
+      { key: "isFounder", label: "Founder member (shows Founder badge)", type: "checkbox" },
     ];
   }
-  if (activeSection === "members-founders") {
+  if (activeSection === "members-executive") {
     return [
       { key: "name", label: "Name" },
-      { key: "title", label: "Title" },
       { key: "role", label: "Role" },
+      { key: "affiliation", label: "Affiliation" },
+      { key: "image", label: "Image URL (optional)" },
+    ];
+  }
+  if (activeSection === "members-attendees") {
+    return [
+      { key: "name", label: "Name" },
+      { key: "affiliation", label: "Affiliation" },
+      { key: "symposiumYear", label: "Symposium year", type: "number" },
+      { key: "symposiumTitle", label: "Symposium title" },
+    ];
+  }
+  if (activeSection === "members-recognized") {
+    return [
+      { key: "name", label: "Name" },
+      { key: "honor", label: "Honor / award" },
+      { key: "year", label: "Year" },
+      { key: "affiliation", label: "Affiliation" },
+    ];
+  }
+  if (activeSection === "blog") {
+    return [
+      { key: "title", label: "Title" },
+      { key: "slug", label: "Slug", hint: "URL id, e.g. welcome-to-the-ips-blog" },
+      { key: "tag", label: "Tag" },
+      { key: "date", label: "Date", type: "month" },
+      { key: "excerpt", label: "Excerpt", multiline: true },
+      { key: "coverImage", label: "Cover image URL (optional)" },
+      { key: "body", label: "Body (HTML: p, h2, h3)", multiline: true },
+    ];
+  }
+  if (activeSection === "reg-settings") {
+    return [
+      { key: "enabled", label: "Show registration section on home page", type: "checkbox" },
+      { key: "title", label: "Section title" },
+      { key: "subtitle", label: "Subtitle", multiline: true },
+      { key: "dates", label: "Dates" },
+      { key: "venue", label: "Venue" },
+      { key: "feeNote", label: "Fee / payment note", multiline: true },
+      {
+        key: "razorpayUrl",
+        label: "Razorpay payment URL",
+        type: "url",
+        hint: "Paste the Razorpay payment link here when ready. After form submit, users open this link.",
+      },
+      { key: "ctaLabel", label: "Button label" },
+    ];
+  }
+  if (activeSection === "reg-entries") {
+    return [
+      { key: "name", label: "Name" },
+      { key: "email", label: "Email" },
+      { key: "phone", label: "Phone" },
+      { key: "affiliation", label: "Affiliation" },
+      { key: "category", label: "Category" },
+      { key: "paymentStatus", label: "Payment status" },
+      { key: "receiptNo", label: "Receipt No." },
+      { key: "razorpayPaymentId", label: "Razorpay Payment ID" },
+      { key: "abstractTitle", label: "Abstract title" },
+      { key: "abstractFileName", label: "Abstract file" },
+      { key: "abstractStoragePath", label: "Storage path (Supabase)" },
+      { key: "submittedAt", label: "Submitted" },
+    ];
+  }
+  if (activeSection === "inbox-contact") {
+    return [
+      { key: "name", label: "Name" },
+      { key: "email", label: "Email" },
+      { key: "phone", label: "Phone" },
+      { key: "message", label: "Message", multiline: true },
+      { key: "submittedAt", label: "Submitted" },
     ];
   }
   return [];
@@ -400,13 +637,92 @@ function getModalData(index: number | "new"): Record<string, string> {
       status: item.status ?? "",
     };
   }
-  if (activeSection === "members-directory") {
-    const item = content.directoryMembers[i];
-    return { name: item.name, membershipNo: String(item.membershipNo) };
+  if (activeSection === "members-permanent") {
+    const item = content.permanentMembers[i];
+    return {
+      name: item.name,
+      membershipNo: String(item.membershipNo),
+      isFounder: item.isFounder ? "true" : "false",
+    };
   }
-  if (activeSection === "members-founders") {
-    const item = content.founderMembers[i];
-    return { name: item.name, title: item.title, role: item.role };
+  if (activeSection === "members-executive") {
+    const item = getExecutives()[i];
+    return {
+      name: item.name,
+      role: item.role,
+      affiliation: item.affiliation,
+      image: item.image ?? "",
+    };
+  }
+  if (activeSection === "members-attendees") {
+    const item = content.symposiumAttendees[i];
+    return {
+      name: item.name,
+      affiliation: item.affiliation ?? "",
+      symposiumYear: String(item.symposiumYear),
+      symposiumTitle: item.symposiumTitle ?? "",
+    };
+  }
+  if (activeSection === "members-recognized") {
+    const item = content.recognizedPeople[i];
+    return {
+      name: item.name,
+      honor: item.honor,
+      year: item.year ?? "",
+      affiliation: item.affiliation ?? "",
+    };
+  }
+  if (activeSection === "blog") {
+    const item = content.blogPosts[i];
+    return {
+      title: item.title,
+      slug: item.slug,
+      tag: item.tag,
+      date: parseNewsMonth(item.date),
+      excerpt: item.excerpt,
+      coverImage: item.coverImage ?? "",
+      body: item.body,
+    };
+  }
+  if (activeSection === "reg-settings") {
+    const r = content.symposiumRegistration;
+    return {
+      enabled: r.enabled ? "true" : "false",
+      title: r.title,
+      subtitle: r.subtitle,
+      dates: r.dates,
+      venue: r.venue,
+      feeNote: r.feeNote,
+      razorpayUrl: r.razorpayUrl,
+      ctaLabel: r.ctaLabel,
+    };
+  }
+  if (activeSection === "reg-entries") {
+    const item = content.symposiumRegistrations[i];
+    return {
+      name: item.name,
+      email: item.email,
+      phone: item.phone,
+      affiliation: item.affiliation,
+      category: item.category,
+      paymentStatus: item.paymentStatus ?? "pending",
+      receiptNo: item.receiptNo ?? "",
+      razorpayPaymentId: item.razorpayPaymentId ?? "",
+      abstractTitle: item.abstractTitle ?? "—",
+      abstractFileName: item.abstractFileName ?? "—",
+      abstractStoragePath: item.abstractStoragePath ?? "—",
+      submittedAt: formatSubmittedAt(item.submittedAt),
+    };
+  }
+  if (activeSection === "inbox-contact") {
+    const item = content.contactMessages[i];
+    return {
+      name: item.name,
+      email: item.email,
+      phone: item.phone,
+      message: item.message,
+      submittedAt: formatSubmittedAt(item.submittedAt),
+    };
   }
   return {};
 }
@@ -418,19 +734,28 @@ function modalTitle(index: number | "new"): string {
       "events-upcoming": "Add symposium",
       "events-past": "Add symposium",
       "events-student": "Add symposium",
-      "members-directory": "Add member",
-      "members-founders": "Add founder",
+      "members-permanent": "Add permanent member",
+      "members-executive": "Add executive",
+      "members-attendees": "Add attendee",
+      "members-recognized": "Add recognised person",
+      blog: "Add blog post",
     };
     return labels[activeSection] ?? "Add item";
   }
   if (activeSection === "announcement") return "Edit announcement";
+  if (activeSection === "reg-settings") return "Edit registration settings";
+  if (activeSection === "reg-entries") return "View registration";
+  if (activeSection === "inbox-contact") return "View contact message";
   const labels: Partial<Record<SectionId, string>> = {
     news: "Edit news item",
     "events-upcoming": "Edit symposium",
     "events-past": "Edit symposium",
     "events-student": "Edit symposium",
-    "members-directory": "Edit member",
-    "members-founders": "Edit founder",
+    "members-permanent": "Edit permanent member",
+    "members-executive": "Edit executive",
+    "members-attendees": "Edit attendee",
+    "members-recognized": "Edit recognised person",
+    blog: "Edit blog post",
   };
   return labels[activeSection] ?? "Edit item";
 }
@@ -443,8 +768,9 @@ function fieldHtml(field: FormField, value: string): string {
 
   const hint = field.hint ? `<p class="dash-field__hint">${field.hint}</p>` : "";
   const inputType = field.type ?? "text";
+  const rows = field.key === "body" ? 12 : 3;
   const input = field.multiline
-    ? `<textarea name="${field.key}" rows="3">${esc(value)}</textarea>`
+    ? `<textarea name="${field.key}" rows="${rows}">${esc(value)}</textarea>`
     : `<input type="${inputType}" name="${field.key}" value="${esc(value)}" />`;
 
   return `<div class="dash-field" data-group="${field.group ?? ""}"><label>${field.label}</label>${input}${hint}</div>`;
@@ -471,21 +797,82 @@ function openModal(index: number | "new"): void {
   const modal = document.getElementById("dash-modal");
   const titleEl = document.getElementById("dash-modal-title");
   const form = document.getElementById("dash-modal-form");
+  const saveBtn = document.getElementById("dash-modal-save");
   if (!modal || !titleEl || !form) return;
 
   titleEl.textContent = modalTitle(index);
   const data = getModalData(index);
+  const readOnly = activeSection === "inbox-contact" || activeSection === "reg-entries";
   form.innerHTML = getModalFields().map((f) => fieldHtml(f, data[f.key] ?? "")).join("");
+  if (readOnly) {
+    form.querySelectorAll("input, textarea, select").forEach((el) => {
+      (el as HTMLInputElement).readOnly = true;
+      (el as HTMLInputElement).disabled = true;
+    });
+  }
+  if (activeSection === "reg-entries" && typeof index === "number") {
+    const item = content.symposiumRegistrations[index];
+    const paid = item.paymentStatus === "paid";
+    const hasAbs = Boolean(item.hasAbstract || item.abstractFileName);
+    form.insertAdjacentHTML(
+      "beforeend",
+      `<div class="dash-field dash-reg-actions">
+        <button type="button" class="btn btn--outline btn--sm" id="dash-receipt-download">Download receipt</button>
+        ${
+          hasAbs && item.abstractDataUrl
+            ? `<a class="btn btn--outline btn--sm" id="dash-abstract-download" href="${esc(item.abstractDataUrl)}" download="${esc(item.abstractFileName || "abstract.pdf")}">Download abstract</a>`
+            : hasAbs
+              ? `<p class="dash-field__hint">Abstract on file: ${esc(item.abstractFileName || "yes")} (Supabase path: ${esc(item.abstractStoragePath || "—")})</p>`
+              : ""
+        }
+        ${
+          paid
+            ? ""
+            : `<button type="button" class="btn btn--primary btn--sm" id="dash-mark-paid">Mark as paid (manual)</button>`
+        }
+        <p class="dash-field__hint">Manual mark is temporary until Razorpay webhook is connected.</p>
+      </div>`,
+    );
+    document.getElementById("dash-receipt-download")?.addEventListener("click", async () => {
+      const { downloadReceipt } = await import("./lib/receipt");
+      const reg = content.symposiumRegistrations[index];
+      const cfg = content.symposiumRegistration;
+      downloadReceipt({
+        registration: reg,
+        event: { title: cfg.title, dates: cfg.dates, venue: cfg.venue },
+      });
+    });
+    document.getElementById("dash-mark-paid")?.addEventListener("click", () => {
+      content.symposiumRegistrations[index] = {
+        ...content.symposiumRegistrations[index],
+        paymentStatus: "paid",
+        razorpayPaymentId:
+          content.symposiumRegistrations[index].razorpayPaymentId || `manual_${Date.now()}`,
+      };
+      saveContent(content);
+      closeModal();
+      renderPanel();
+      showStatus("Marked as paid. Receipt will show PAID.");
+    });
+  }
+  if (saveBtn) {
+    saveBtn.hidden = readOnly;
+    saveBtn.textContent = "Save";
+  }
   bindFormEnhancements();
   modal.hidden = false;
   document.body.style.overflow = "hidden";
-  (form.querySelector("input, textarea") as HTMLElement | null)?.focus();
+  if (!readOnly) {
+    (form.querySelector("input, textarea") as HTMLElement | null)?.focus();
+  }
 }
 
 function closeModal(): void {
   modalIndex = null;
   const modal = document.getElementById("dash-modal");
+  const saveBtn = document.getElementById("dash-modal-save");
   if (modal) modal.hidden = true;
+  if (saveBtn) saveBtn.hidden = false;
   document.body.style.overflow = "";
 }
 
@@ -506,6 +893,10 @@ function readModalForm(): Record<string, string> {
 }
 
 function applyModalData(data: Record<string, string>): void {
+  if (activeSection === "inbox-contact" || activeSection === "reg-entries") {
+    return;
+  }
+
   if (activeSection === "announcement") {
     content.announcement = {
       lead: data.lead ?? "",
@@ -516,6 +907,20 @@ function applyModalData(data: Record<string, string>): void {
       cta: data.cta ?? "",
       ctaUrl: data.ctaUrl ?? "",
       ticker: data.ticker ?? "",
+    };
+    return;
+  }
+
+  if (activeSection === "reg-settings") {
+    content.symposiumRegistration = {
+      enabled: data.enabled === "true",
+      title: data.title ?? "",
+      subtitle: data.subtitle ?? "",
+      dates: data.dates ?? "",
+      venue: data.venue ?? "",
+      feeNote: data.feeNote ?? "",
+      razorpayUrl: data.razorpayUrl ?? "",
+      ctaLabel: data.ctaLabel ?? "Register & Pay",
     };
     return;
   }
@@ -541,15 +946,50 @@ function applyModalData(data: Record<string, string>): void {
     return base;
   };
 
-  const saveDirectory = (): DirectoryMember => ({
+  const savePermanent = (): PermanentMember => ({
     name: data.name ?? "",
     membershipNo: Number(data.membershipNo) || 0,
+    isFounder: data.isFounder === "true",
   });
 
-  const saveFounder = (): FounderMember => ({
+  const saveExecutive = (): TeamMember => ({
     name: data.name ?? "",
-    title: data.title ?? "",
     role: data.role ?? "",
+    affiliation: data.affiliation ?? "",
+    image: data.image ?? "",
+    section: "executive",
+  });
+
+  const saveAttendee = (): SymposiumAttendee => ({
+    name: data.name ?? "",
+    affiliation: data.affiliation || undefined,
+    symposiumYear: Number(data.symposiumYear) || new Date().getFullYear(),
+    symposiumTitle: data.symposiumTitle || undefined,
+  });
+
+  const saveRecognized = (): RecognizedPerson => ({
+    name: data.name ?? "",
+    honor: data.honor ?? "",
+    year: data.year || undefined,
+    affiliation: data.affiliation || undefined,
+  });
+
+  const slugify = (text: string): string =>
+    text
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+
+  const saveBlog = (): BlogPost => ({
+    title: data.title ?? "",
+    slug: (data.slug || slugify(data.title ?? "")).trim(),
+    tag: data.tag ?? "",
+    date: formatNewsMonth(data.date ?? "") || data.date || "",
+    excerpt: data.excerpt ?? "",
+    coverImage: data.coverImage || undefined,
+    body: data.body ?? "",
   });
 
   if (activeSection === "news") {
@@ -567,17 +1007,40 @@ function applyModalData(data: Record<string, string>): void {
     return;
   }
 
-  if (activeSection === "members-directory") {
-    const item = saveDirectory();
-    if (modalIndex === "new") content.directoryMembers.push(item);
-    else content.directoryMembers[modalIndex as number] = item;
+  if (activeSection === "members-permanent") {
+    const item = savePermanent();
+    if (modalIndex === "new") content.permanentMembers.push(item);
+    else content.permanentMembers[modalIndex as number] = item;
     return;
   }
 
-  if (activeSection === "members-founders") {
-    const item = saveFounder();
-    if (modalIndex === "new") content.founderMembers.push(item);
-    else content.founderMembers[modalIndex as number] = item;
+  if (activeSection === "members-executive") {
+    const executives = getExecutives();
+    const item = saveExecutive();
+    if (modalIndex === "new") executives.push(item);
+    else executives[modalIndex as number] = item;
+    setExecutives(executives);
+    return;
+  }
+
+  if (activeSection === "members-attendees") {
+    const item = saveAttendee();
+    if (modalIndex === "new") content.symposiumAttendees.push(item);
+    else content.symposiumAttendees[modalIndex as number] = item;
+    return;
+  }
+
+  if (activeSection === "members-recognized") {
+    const item = saveRecognized();
+    if (modalIndex === "new") content.recognizedPeople.push(item);
+    else content.recognizedPeople[modalIndex as number] = item;
+    return;
+  }
+
+  if (activeSection === "blog") {
+    const item = saveBlog();
+    if (modalIndex === "new") content.blogPosts.push(item);
+    else content.blogPosts[modalIndex as number] = item;
   }
 }
 
@@ -590,6 +1053,13 @@ function moveItem<T>(arr: T[], index: number, dir: -1 | 1): void {
 function bindPanelEvents(): void {
   const panel = document.getElementById("dashboard-panel");
   if (!panel) return;
+
+  panel.querySelectorAll("[data-reg-filter]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      regFilter = ((btn as HTMLElement).dataset.regFilter as typeof regFilter) || "all";
+      renderPanel();
+    });
+  });
 
   panel.querySelectorAll("[data-edit]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -611,17 +1081,24 @@ function bindPanelEvents(): void {
       const index = Number((btn as HTMLElement).dataset.index);
       const dir = (btn as HTMLElement).dataset.move === "up" ? -1 : 1;
 
-      const lists: Partial<Record<SectionId, keyof SiteContent>> = {
-        news: "news",
-        "events-upcoming": "upcomingSymposia",
-        "events-past": "pastSymposia",
-        "events-student": "pastStudentSymposia",
-        "members-directory": "directoryMembers",
-        "members-founders": "founderMembers",
-      };
-
-      const key = lists[activeSection];
-      if (key) moveItem(content[key] as unknown[], index, dir as -1 | 1);
+      if (activeSection === "members-executive") {
+        const executives = getExecutives();
+        moveItem(executives, index, dir as -1 | 1);
+        setExecutives(executives);
+      } else {
+        const lists: Partial<Record<SectionId, keyof SiteContent>> = {
+          news: "news",
+          "events-upcoming": "upcomingSymposia",
+          "events-past": "pastSymposia",
+          "events-student": "pastStudentSymposia",
+          "members-permanent": "permanentMembers",
+          "members-attendees": "symposiumAttendees",
+          "members-recognized": "recognizedPeople",
+          blog: "blogPosts",
+        };
+        const key = lists[activeSection];
+        if (key) moveItem(content[key] as unknown[], index, dir as -1 | 1);
+      }
       renderPanel();
     });
   });
@@ -637,11 +1114,24 @@ function bindPanelEvents(): void {
         "events-upcoming": () => content.upcomingSymposia.splice(index, 1),
         "events-past": () => content.pastSymposia.splice(index, 1),
         "events-student": () => content.pastStudentSymposia.splice(index, 1),
-        "members-directory": () => content.directoryMembers.splice(index, 1),
-        "members-founders": () => content.founderMembers.splice(index, 1),
+        "members-permanent": () => content.permanentMembers.splice(index, 1),
+        "members-executive": () => {
+          const executives = getExecutives();
+          executives.splice(index, 1);
+          setExecutives(executives);
+        },
+        "members-attendees": () => content.symposiumAttendees.splice(index, 1),
+        "members-recognized": () => content.recognizedPeople.splice(index, 1),
+        blog: () => content.blogPosts.splice(index, 1),
+        "reg-entries": () => content.symposiumRegistrations.splice(index, 1),
+        "inbox-contact": () => content.contactMessages.splice(index, 1),
       };
 
       deleteMap[activeSection]?.();
+      if (activeSection === "reg-entries" || activeSection === "inbox-contact") {
+        saveContent(content);
+        showStatus("Deleted and saved.");
+      }
       renderPanel();
     });
   });

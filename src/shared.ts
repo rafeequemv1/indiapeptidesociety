@@ -1,3 +1,5 @@
+import { loadContent, saveContent, newId } from "./data/store";
+
 export function initMobileMenu(): void {
   const toggle = document.getElementById("menu-toggle");
   const mobileNav = document.getElementById("mobile-nav");
@@ -51,6 +53,23 @@ export function initContactForm(): void {
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
+    const data = new FormData(form);
+    const name = String(data.get("name") ?? "").trim();
+    const email = String(data.get("email") ?? "").trim();
+    const phone = String(data.get("phone") ?? "").trim();
+    const message = String(data.get("message") ?? "").trim();
+    if (!name || !email || !message) return;
+
+    const content = loadContent();
+    content.contactMessages.unshift({
+      id: newId(),
+      name,
+      email,
+      phone,
+      message,
+      submittedAt: new Date().toISOString(),
+    });
+    saveContent(content);
     form.hidden = true;
     success.hidden = false;
   });

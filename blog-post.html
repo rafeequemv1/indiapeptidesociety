@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog | Indian Peptide Society</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="description" content="Read an article from the Indian Peptide Society blog." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div id="top-bar-mount"></div>
+    <div id="header-mount"></div>
+
+    <main>
+      <article class="blog-post-page">
+        <div class="container blog-post-layout">
+          <aside class="blog-outline" aria-label="Article outline">
+            <p class="blog-outline__label">Contents</p>
+            <nav id="blog-outline-nav" class="blog-outline__nav"></nav>
+          </aside>
+          <div class="blog-post-main">
+            <a href="/blog.html" class="blog-back">← All posts</a>
+            <header class="blog-post-header">
+              <p id="blog-post-meta" class="blog-post-meta"></p>
+              <h1 id="blog-post-title" class="blog-post-title"></h1>
+              <p id="blog-post-excerpt" class="blog-post-excerpt"></p>
+            </header>
+            <div id="blog-post-body" class="blog-post-body"></div>
+          </div>
+        </div>
+      </article>
+    </main>
+
+    <div id="footer-mount"></div>
+    <script type="module" src="/src/blog-post.ts"></script>
+  </body>
+</html>
