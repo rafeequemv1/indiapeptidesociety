@@ -171,6 +171,28 @@ export const defaultContent: SiteContent = {
       `.trim(),
     },
   ],
+  galleryImages: [
+    {
+      id: "gallery-1",
+      title: "Lifetime Achievement Award presentation",
+      image: "/images/awards/award-1.png",
+    },
+    {
+      id: "gallery-2",
+      title: "Honouring distinguished peptide scientists",
+      image: "/images/awards/award-2.png",
+    },
+    {
+      id: "gallery-3",
+      title: "Indian Peptide Society award ceremony",
+      image: "/images/awards/award-3.png",
+    },
+    {
+      id: "gallery-4",
+      title: "Prof. S. B. Mathur — Lifetime Achievement Award",
+      image: "/images/awards/award-4.png",
+    },
+  ],
   symposiumRegistration: {
     enabled: true,
     title: "Symposium Registration",

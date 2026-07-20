@@ -96,6 +96,13 @@ export interface BlogPost {
   body: string;
 }
 
+export interface GalleryImage {
+  id: string;
+  title: string;
+  image: string;
+  storagePath?: string;
+}
+
 export interface FaqItem {
   question: string;
   answer: string;
@@ -165,6 +172,7 @@ export interface SiteContent {
   symposiumAttendees: SymposiumAttendee[];
   recognizedPeople: RecognizedPerson[];
   blogPosts: BlogPost[];
+  galleryImages: GalleryImage[];
   symposiumRegistration: SymposiumRegistrationConfig;
   contactMessages: ContactMessage[];
   symposiumRegistrations: SymposiumRegistration[];

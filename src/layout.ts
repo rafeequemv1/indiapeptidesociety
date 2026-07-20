@@ -4,6 +4,7 @@ export type PageId =
   | "members"
   | "events"
   | "blog"
+  | "gallery"
   | "faq"
   | "contact"
   | "dashboard";
@@ -21,6 +22,7 @@ const navItems: { label: string; href: string; id: PageId }[] = [
   { label: "Members", href: "/members.html", id: "members" },
   { label: "Events", href: "/events.html", id: "events" },
   { label: "Blog", href: "/blog.html", id: "blog" },
+  { label: "Gallery", href: "/gallery.html", id: "gallery" },
   { label: "Faq", href: "/faq.html", id: "faq" },
   { label: "Contact Us", href: "/contact.html", id: "contact" },
 ];
@@ -32,6 +34,7 @@ function navLink(item: (typeof navItems)[0], active: PageId): string {
     (active === "members" && item.label === "Members") ||
     (active === "events" && item.label === "Events") ||
     (active === "blog" && item.label === "Blog") ||
+    (active === "gallery" && item.label === "Gallery") ||
     (active === "faq" && item.label === "Faq") ||
     (active === "contact" && item.label === "Contact Us");
   const activeClass = isActive ? ' class="is-active"' : "";
@@ -119,6 +122,7 @@ export function renderFooter(): string {
             <li><a href="/members.html">Members</a></li>
             <li><a href="/members.html?tab=permanent">Permanent Members</a></li>
             <li><a href="/blog.html">Blog</a></li>
+            <li><a href="/gallery.html">Gallery</a></li>
             <li><a href="/index.html#about">About us</a></li>
             <li><a href="#">Term Of Service</a></li>
             <li><a href="#">Privacy Policy</a></li>

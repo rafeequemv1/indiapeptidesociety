@@ -3,6 +3,7 @@ import type {
   BlogPost,
   ContactMessage,
   FaqItem,
+  GalleryImage,
   LifetimeAward,
   NewsItem,
   PermanentMember,
@@ -117,6 +118,15 @@ export function mapBlog(row: Tables["blog_posts"]["Row"]): BlogPost {
   };
 }
 
+export function mapGallery(row: Tables["gallery_images"]["Row"]): GalleryImage {
+  return {
+    id: row.id,
+    title: row.title,
+    image: row.image_url,
+    storagePath: row.storage_path ?? undefined,
+  };
+}
+
 export function mapRegistrationSettings(
   row: Tables["registration_settings"]["Row"],
 ): SymposiumRegistrationConfig {
@@ -197,6 +207,7 @@ export function emptySiteContent(): SiteContent {
     symposiumAttendees: [],
     recognizedPeople: [],
     blogPosts: [],
+    galleryImages: [],
     symposiumRegistration: {
       enabled: false,
       title: "",

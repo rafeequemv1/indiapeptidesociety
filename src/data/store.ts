@@ -17,6 +17,7 @@ export type {
   SymposiumAttendee,
   RecognizedPerson,
   BlogPost,
+  GalleryImage,
   FaqItem,
   ContactMessage,
   SymposiumRegistrationConfig,
@@ -97,6 +98,14 @@ function normalizeContent(parsed: Partial<SiteContent>): SiteContent {
       ? parsed.recognizedPeople
       : base.recognizedPeople,
     blogPosts: parsed.blogPosts?.length ? parsed.blogPosts : base.blogPosts,
+    galleryImages: Array.isArray(parsed.galleryImages)
+      ? parsed.galleryImages.map((g, i) => ({
+          id: g.id || `gallery-${i + 1}`,
+          title: g.title ?? "",
+          image: g.image ?? "",
+          storagePath: g.storagePath,
+        }))
+      : base.galleryImages,
     founderMembers: parsed.founderMembers?.length ? parsed.founderMembers : base.founderMembers,
     symposiumRegistration: {
       ...base.symposiumRegistration,

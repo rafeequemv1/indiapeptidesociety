@@ -2659,3 +2659,54 @@ a.auth-text-link {
     gap: 3.5rem;
   }
 }
+
+/* ===== Gallery ===== */
+.gallery-page {
+  padding-block: 2.5rem 4rem;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1.5rem;
+}
+
+.gallery-card {
+  margin: 0;
+}
+
+.gallery-card__media {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(196, 90, 40, 0.08), transparent 55%),
+    #e8e4dc;
+}
+
+.gallery-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.45s ease;
+}
+
+.gallery-card:hover .gallery-card__media img {
+  transform: scale(1.03);
+}
+
+.gallery-card__title {
+  margin-top: 0.75rem;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #1f2937;
+}
+
+@media (min-width: 900px) {
+  .gallery-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.75rem;
+  }
+}

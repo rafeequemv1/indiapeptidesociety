@@ -10,6 +10,7 @@ import {
   mapBlog,
   mapContact,
   mapFaq,
+  mapGallery,
   mapNews,
   mapPermanent,
   mapRecognized,
@@ -53,6 +54,7 @@ export function createSupabaseRepository(): ContentRepository {
         attendeesRes,
         recognizedRes,
         blogRes,
+        galleryRes,
         regSettingsRes,
         metaRes,
         contactsRes,
@@ -70,6 +72,7 @@ export function createSupabaseRepository(): ContentRepository {
         client.from("symposium_attendees").select("*").order("sort_order"),
         client.from("recognized_people").select("*").order("sort_order"),
         client.from("blog_posts").select("*").eq("published", true).order("sort_order"),
+        client.from("gallery_images").select("*").order("sort_order"),
         client.from("registration_settings").select("*").limit(1).maybeSingle(),
         client.from("site_meta").select("*").eq("key", "total_members").maybeSingle(),
         client.from("contact_messages").select("*").order("submitted_at", { ascending: false }),
@@ -104,6 +107,7 @@ export function createSupabaseRepository(): ContentRepository {
       if (attendeesRes.data) content.symposiumAttendees = attendeesRes.data.map(mapAttendee);
       if (recognizedRes.data) content.recognizedPeople = recognizedRes.data.map(mapRecognized);
       if (blogRes.data) content.blogPosts = blogRes.data.map(mapBlog);
+      if (galleryRes.data) content.galleryImages = galleryRes.data.map(mapGallery);
       if (regSettingsRes.data) {
         content.symposiumRegistration = mapRegistrationSettings(regSettingsRes.data);
       }

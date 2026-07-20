@@ -231,6 +231,23 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["blog_posts"]["Row"]>;
       Relationships: [];
       };
+      gallery_images: {
+        Row: {
+          id: string;
+          title: string;
+          image_url: string;
+          storage_path: string | null;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["gallery_images"]["Row"]> & {
+          image_url?: string;
+          title?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["gallery_images"]["Row"]>;
+        Relationships: [];
+      };
       registration_settings: {
         Row: {
           id: string;

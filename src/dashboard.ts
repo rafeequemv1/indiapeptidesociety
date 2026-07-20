@@ -9,8 +9,16 @@ import {
   type SymposiumAttendee,
   type RecognizedPerson,
   type BlogPost,
+  type GalleryImage,
   type TeamMember,
 } from "./data/store";
+import { isSupabaseConfigured } from "./data/supabase/client";
+import {
+  deleteGalleryRow,
+  removeGalleryImage,
+  uploadGalleryImage,
+  upsertGalleryRow,
+} from "./data/supabase/upload-gallery";
 import { injectLayout } from "./layout";
 import { initMobileMenu } from "./shared";
 import {
@@ -43,6 +51,7 @@ type SectionId =
   | "members-attendees"
   | "members-recognized"
   | "blog"
+  | "gallery"
   | "inbox-contact";
 
 interface NavItem {
@@ -163,6 +172,7 @@ const NAV: NavItem[] = [
   { id: "members-attendees", label: "Symposium Attendees", breadcrumb: ["Dashboard", "Members", "Attendees"] },
   { id: "members-recognized", label: "Recognised People", breadcrumb: ["Dashboard", "Members", "Recognised"] },
   { id: "blog", label: "Blog Posts", breadcrumb: ["Dashboard", "Blog", "Posts"] },
+  { id: "gallery", label: "Gallery", breadcrumb: ["Dashboard", "Gallery", "Images"] },
   { id: "inbox-contact", label: "Contact Messages", breadcrumb: ["Dashboard", "Inbox", "Contact"] },
 ];
 
@@ -172,6 +182,7 @@ const NAV_GROUPS: { label: string; items: SectionId[] }[] = [
   { label: "Events", items: ["events-upcoming", "events-past", "events-student"] },
   { label: "Members", items: ["members-permanent", "members-executive", "members-attendees", "members-recognized"] },
   { label: "Blog", items: ["blog"] },
+  { label: "Gallery", items: ["gallery"] },
   { label: "Inbox", items: ["inbox-contact"] },
 ];
 
@@ -350,6 +361,15 @@ function renderBlog(): string {
     <div class="dash-list">${items}</div>`;
 }
 
+function renderGallery(): string {
+  const items = content.galleryImages
+    .map((item, i) => listRow(item.title || "Untitled", item.image ? "Image set" : "No image", i, true))
+    .join("");
+  return `
+    ${panelHead("Gallery", "Photos on the Gallery page. Upload an image and set a title. Files go to the Supabase gallery bucket when signed in.", "+ Add image")}
+    <div class="dash-list">${items || `<p class="dash-empty">No gallery images yet.</p>`}</div>`;
+}
+
 function renderRegSettings(): string {
   const r = content.symposiumRegistration;
   const status = r.enabled ? "Visible on home" : "Hidden";
@@ -494,6 +514,7 @@ function renderPanel(): void {
     "members-attendees": renderAttendees,
     "members-recognized": renderRecognized,
     blog: renderBlog,
+    gallery: renderGallery,
     "inbox-contact": renderContactInbox,
   };
 
@@ -656,6 +677,20 @@ function getModalFields(): FormField[] {
       },
     ];
   }
+  if (activeSection === "gallery") {
+    return [
+      { key: "title", label: "Title", hint: "Caption shown under the photo on the Gallery page." },
+      {
+        key: "image",
+        label: "Image",
+        type: "file",
+        accept: "image/*",
+        hint: isSupabaseConfigured()
+          ? "Uploaded to the Supabase gallery bucket when you save (while signed in as admin)."
+          : "Stored in browser content for now. Configure Supabase to use the gallery bucket.",
+      },
+    ];
+  }
   if (activeSection === "reg-settings") {
     return [
       { key: "enabled", label: "Show registration section on home page", type: "checkbox" },
@@ -792,6 +827,13 @@ function getModalData(index: number | "new"): Record<string, string> {
       body: item.body,
     };
   }
+  if (activeSection === "gallery") {
+    const item = content.galleryImages[i];
+    return {
+      title: item.title,
+      image: item.image ?? "",
+    };
+  }
   if (activeSection === "reg-settings") {
     const r = content.symposiumRegistration;
     return {
@@ -847,6 +889,7 @@ function modalTitle(index: number | "new"): string {
       "members-attendees": "Add attendee",
       "members-recognized": "Add recognised person",
       blog: "Add blog post",
+      gallery: "Add gallery image",
     };
     return labels[activeSection] ?? "Add item";
   }
@@ -864,6 +907,7 @@ function modalTitle(index: number | "new"): string {
     "members-attendees": "Edit attendee",
     "members-recognized": "Edit recognised person",
     blog: "Edit blog post",
+    gallery: "Edit gallery image",
   };
   return labels[activeSection] ?? "Edit item";
 }
@@ -1086,7 +1130,13 @@ function readModalForm(): Record<string, string> {
   return data;
 }
 
-function applyModalData(data: Record<string, string>): void {
+async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], filename, { type: blob.type || "image/jpeg" });
+}
+
+async function applyModalData(data: Record<string, string>): Promise<void> {
   if (activeSection === "inbox-contact" || activeSection === "reg-entries") {
     return;
   }
@@ -1239,6 +1289,43 @@ function applyModalData(data: Record<string, string>): void {
     const item = saveBlog();
     if (modalIndex === "new") content.blogPosts.push(item);
     else content.blogPosts[modalIndex as number] = item;
+    return;
+  }
+
+  if (activeSection === "gallery") {
+    const existing = modalIndex === "new" ? null : content.galleryImages[modalIndex as number];
+    const id = existing?.id ?? crypto.randomUUID();
+    let image = (data.image ?? "").trim();
+    let storagePath = existing?.storagePath;
+
+    if (!image) {
+      throw new Error("Please upload an image.");
+    }
+
+    if (image.startsWith("data:") && isSupabaseConfigured()) {
+      const file = await dataUrlToFile(image, `gallery-${id}.jpg`);
+      const uploaded = await uploadGalleryImage(file, id);
+      if (existing?.storagePath && existing.storagePath !== uploaded.path) {
+        await removeGalleryImage(existing.storagePath).catch(() => undefined);
+      }
+      image = uploaded.url;
+      storagePath = uploaded.path;
+    }
+
+    const item: GalleryImage = {
+      id,
+      title: (data.title ?? "").trim(),
+      image,
+      storagePath,
+    };
+    if (modalIndex === "new") content.galleryImages.push(item);
+    else content.galleryImages[modalIndex as number] = item;
+
+    if (isSupabaseConfigured()) {
+      const sortOrder =
+        modalIndex === "new" ? content.galleryImages.length - 1 : (modalIndex as number);
+      await upsertGalleryRow(item, sortOrder);
+    }
   }
 }
 
@@ -1484,6 +1571,7 @@ function bindPanelEvents(): void {
           "members-attendees": "symposiumAttendees",
           "members-recognized": "recognizedPeople",
           blog: "blogPosts",
+          gallery: "galleryImages",
         };
         const key = lists[activeSection];
         if (key) moveItem(content[key] as unknown[], index, dir as -1 | 1);
@@ -1493,10 +1581,23 @@ function bindPanelEvents(): void {
   });
 
   panel.querySelectorAll("[data-delete]").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       if (!confirm("Delete this item?")) return;
       collectInlineFields();
       const index = Number((btn as HTMLElement).dataset.delete);
+
+      if (activeSection === "gallery") {
+        const removed = content.galleryImages[index];
+        content.galleryImages.splice(index, 1);
+        if (removed?.storagePath) {
+          await removeGalleryImage(removed.storagePath).catch(() => undefined);
+        }
+        if (removed?.id && isSupabaseConfigured()) {
+          await deleteGalleryRow(removed.id).catch(() => undefined);
+        }
+        renderPanel();
+        return;
+      }
 
       const deleteMap: Partial<Record<SectionId, () => void>> = {
         news: () => content.news.splice(index, 1),
@@ -1527,10 +1628,24 @@ function bindPanelEvents(): void {
 }
 
 function bindModalEvents(): void {
-  document.getElementById("dash-modal-save")?.addEventListener("click", () => {
-    applyModalData(readModalForm());
-    closeModal();
-    renderPanel();
+  document.getElementById("dash-modal-save")?.addEventListener("click", async () => {
+    const saveBtn = document.getElementById("dash-modal-save") as HTMLButtonElement | null;
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = activeSection === "gallery" ? "Uploading…" : "Saving…";
+    }
+    try {
+      await applyModalData(readModalForm());
+      closeModal();
+      renderPanel();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not save");
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save";
+      }
+    }
   });
 
   document.querySelectorAll("[data-modal-close]").forEach((el) => {
