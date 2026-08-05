@@ -660,8 +660,8 @@ img {
 
 @media (min-width: 1024px) {
   .welcome__grid {
-    grid-template-columns: 3fr 5fr 4fr;
-    gap: 2rem;
+    grid-template-columns: 2fr 3fr;
+    gap: 3rem;
     align-items: center;
   }
   .welcome__center p {

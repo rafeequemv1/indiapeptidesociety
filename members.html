@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Members | Indian Peptide Society</title>
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <meta name="description" content="Browse permanent members, executive members, symposium attendees, and recognised people of the Indian Peptide Society." />
+    <meta name="description" content="Browse permanent members, executive members, and recognised people of the Indian Peptide Society." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -19,7 +19,7 @@
       <section class="page-hero">
         <div class="container">
           <h1 class="page-hero__title">Members</h1>
-          <p class="page-hero__sub">Permanent, executive, symposium attendees &amp; recognised people</p>
+          <p class="page-hero__sub">Permanent, executive &amp; recognised people</p>
         </div>
       </section>
 
@@ -40,10 +40,6 @@
                 <span>Executive Members</span>
                 <span class="members-nav__count" id="count-executive"></span>
               </button>
-              <button type="button" class="members-nav__item" data-tab="attendees" role="tab" aria-selected="false">
-                <span>Symposium Attendees</span>
-                <span class="members-nav__count" id="count-attendees"></span>
-              </button>
               <button type="button" class="members-nav__item" data-tab="recognized" role="tab" aria-selected="false">
                 <span>Recognised People</span>
                 <span class="members-nav__count" id="count-recognized"></span>
@@ -56,7 +52,7 @@
               <div class="section-header section-header--left">
                 <h2 class="heading-md">All members</h2>
                 <div class="section-line section-line--left"></div>
-                <p class="members-panel-intro">Overview across permanent, executive, attendees, and recognised people.</p>
+                <p class="members-panel-intro">Overview across permanent, executive, and recognised people.</p>
               </div>
               <div id="all-stack" class="members-all-stack"></div>
             </div>
@@ -86,21 +82,6 @@
                 <p class="members-panel-intro">Office bearers who guide the society between symposia.</p>
               </div>
               <div id="executive-grid" class="people-grid people-grid--executive"></div>
-            </div>
-
-            <div id="panel-attendees" role="tabpanel" hidden>
-              <div class="section-header section-header--left">
-                <h2 class="heading-md">Symposium Attendees</h2>
-                <div class="section-line section-line--left"></div>
-                <p class="members-panel-intro">One symposium each year — browse attendees by year.</p>
-              </div>
-              <div class="members-toolbar">
-                <label class="year-filter">
-                  <span>Symposium year</span>
-                  <select id="attendee-year" aria-label="Filter by symposium year"></select>
-                </label>
-              </div>
-              <div id="attendees-grid" class="people-grid"></div>
             </div>
 
             <div id="panel-recognized" role="tabpanel" hidden>

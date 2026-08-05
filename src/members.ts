@@ -4,15 +4,14 @@ import {
   escapeHtml,
   type PermanentMember,
   type TeamMember,
-  type SymposiumAttendee,
   type RecognizedPerson,
 } from "./data/store";
 import { injectLayout } from "./layout";
 import { initMobileMenu, initNewsletterForm } from "./shared";
 
-type TabId = "all" | "permanent" | "executive" | "attendees" | "recognized";
+type TabId = "all" | "permanent" | "executive" | "recognized";
 
-const VALID_TABS: TabId[] = ["all", "permanent", "executive", "attendees", "recognized"];
+const VALID_TABS: TabId[] = ["all", "permanent", "executive", "recognized"];
 
 function getInitials(name: string): string {
   return name
@@ -56,19 +55,6 @@ function renderExecutiveCard(member: TeamMember): string {
     </article>`;
 }
 
-function renderAttendeeCard(member: SymposiumAttendee): string {
-  return `
-    <article class="people-card">
-      <div class="people-card__avatar" aria-hidden="true">${escapeHtml(getInitials(member.name))}</div>
-      <div class="people-card__body">
-        <span class="people-card__badge">Attendee</span>
-        <h3 class="people-card__name">${escapeHtml(member.name)}</h3>
-        ${member.affiliation ? `<p class="people-card__title">${escapeHtml(member.affiliation)}</p>` : ""}
-        <p class="people-card__meta">${escapeHtml(member.symposiumTitle || `${member.symposiumYear} Symposium`)}</p>
-      </div>
-    </article>`;
-}
-
 function renderRecognizedCard(person: RecognizedPerson): string {
   return `
     <article class="people-card people-card--recognized">
@@ -90,34 +76,21 @@ function initMembersPage(): void {
     all: document.getElementById("panel-all"),
     permanent: document.getElementById("panel-permanent"),
     executive: document.getElementById("panel-executive"),
-    attendees: document.getElementById("panel-attendees"),
     recognized: document.getElementById("panel-recognized"),
   };
   const allStack = document.getElementById("all-stack");
   const permanentGrid = document.getElementById("permanent-grid");
   const executiveGrid = document.getElementById("executive-grid");
-  const attendeesGrid = document.getElementById("attendees-grid");
   const recognizedGrid = document.getElementById("recognized-grid");
   const searchInput = document.getElementById("member-search") as HTMLInputElement | null;
-  const yearSelect = document.getElementById("attendee-year") as HTMLSelectElement | null;
   const resultsText = document.getElementById("results-text");
   const nextBtn = document.getElementById("next-page") as HTMLButtonElement | null;
 
-  if (!allStack || !permanentGrid || !executiveGrid || !attendeesGrid || !recognizedGrid) return;
+  if (!allStack || !permanentGrid || !executiveGrid || !recognizedGrid) return;
 
   const executives = data.team.filter((m) => m.section === "executive");
   executiveGrid.innerHTML = executives.map(renderExecutiveCard).join("");
   recognizedGrid.innerHTML = data.recognizedPeople.map(renderRecognizedCard).join("");
-
-  const years = [...new Set(data.symposiumAttendees.map((a) => a.symposiumYear))].sort((a, b) => b - a);
-  let selectedYear = years[0] ?? new Date().getFullYear();
-
-  if (yearSelect) {
-    yearSelect.innerHTML = years.length
-      ? years.map((y) => `<option value="${y}">${y}</option>`).join("")
-      : `<option value="">No attendees yet</option>`;
-    yearSelect.value = String(selectedYear);
-  }
 
   function setCount(id: string, n: number): void {
     const el = document.getElementById(id);
@@ -126,28 +99,13 @@ function initMembersPage(): void {
 
   setCount("count-permanent", data.permanentMembers.length);
   setCount("count-executive", executives.length);
-  setCount("count-attendees", data.symposiumAttendees.length);
   setCount("count-recognized", data.recognizedPeople.length);
-  setCount(
-    "count-all",
-    data.permanentMembers.length +
-      executives.length +
-      data.symposiumAttendees.length +
-      data.recognizedPeople.length,
-  );
-
-  function renderAttendees(): void {
-    const list = data.symposiumAttendees.filter((a) => a.symposiumYear === selectedYear);
-    attendeesGrid!.innerHTML = list.length
-      ? list.map(renderAttendeeCard).join("")
-      : `<p class="members-empty">No attendees listed for ${selectedYear}.</p>`;
-  }
+  setCount("count-all", data.permanentMembers.length + executives.length + data.recognizedPeople.length);
 
   function renderAll(): void {
     const previewPermanent = [...data.permanentMembers]
       .sort((a, b) => Number(Boolean(b.isFounder)) - Number(Boolean(a.isFounder)))
       .slice(0, 6);
-    const previewAttendees = data.symposiumAttendees.filter((a) => a.symposiumYear === selectedYear).slice(0, 6);
 
     allStack!.innerHTML = `
       <section class="members-preview">
@@ -163,17 +121,6 @@ function initMembersPage(): void {
           <button type="button" class="members-preview__link" data-goto="executive">View all →</button>
         </div>
         <div class="people-grid people-grid--executive">${executives.map(renderExecutiveCard).join("")}</div>
-      </section>
-      <section class="members-preview">
-        <div class="members-preview__head">
-          <h3>Symposium Attendees${years.length ? ` · ${selectedYear}` : ""}</h3>
-          <button type="button" class="members-preview__link" data-goto="attendees">View all →</button>
-        </div>
-        <div class="people-grid">${
-          previewAttendees.length
-            ? previewAttendees.map(renderAttendeeCard).join("")
-            : `<p class="members-empty">No attendees listed yet.</p>`
-        }</div>
       </section>
       <section class="members-preview">
         <div class="members-preview__head">
@@ -247,7 +194,7 @@ function initMembersPage(): void {
 
   const params = new URLSearchParams(window.location.search);
   const paramTab = params.get("tab");
-  if (paramTab === "founders" || paramTab === "directory") {
+  if (paramTab === "founders" || paramTab === "directory" || paramTab === "attendees") {
     setTab("permanent");
   } else if (paramTab && VALID_TABS.includes(paramTab as TabId)) {
     setTab(paramTab as TabId);
@@ -266,14 +213,7 @@ function initMembersPage(): void {
     renderPermanent();
   });
 
-  yearSelect?.addEventListener("change", () => {
-    selectedYear = Number(yearSelect.value) || selectedYear;
-    renderAttendees();
-    renderAll();
-  });
-
   renderPermanent();
-  renderAttendees();
   renderAll();
 }
 
