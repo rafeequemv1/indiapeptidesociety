@@ -87,7 +87,7 @@ function showAuthForms(mode: AuthMode = "signin"): void {
   setMode(mode);
 }
 
-function showSignedIn(email: string, isAdmin: boolean): void {
+function showSignedIn(email: string, _isAdmin: boolean): void {
   clearPasswordRecovery();
   showEl("auth-forms", false);
   showEl("auth-set-password", false);
@@ -95,7 +95,7 @@ function showSignedIn(email: string, isAdmin: boolean): void {
   const emailEl = document.getElementById("auth-user-email");
   if (emailEl) emailEl.textContent = email;
   const dash = document.getElementById("auth-go-dashboard");
-  if (dash) dash.hidden = !isAdmin;
+  if (dash) dash.hidden = false;
   setHero("Welcome", "You are signed in");
 }
 
@@ -151,11 +151,7 @@ function bindForms(): void {
       return;
     }
     if (result.session) {
-      if (isAdminUser(result.user)) {
-        window.location.href = "/dashboard.html";
-        return;
-      }
-      showSignedIn(email, false);
+      window.location.href = "/dashboard.html";
       return;
     }
     setMsg("signup-ok", "Account created. You can sign in now.", true);
@@ -176,16 +172,12 @@ function bindForms(): void {
     const email = String(data.get("email") ?? "").trim();
     const password = String(data.get("password") ?? "");
     setMsg("signin-error", "", false);
-    const { data: result, error } = await signInWithPassword(email, password);
+    const { error } = await signInWithPassword(email, password);
     if (error) {
       setMsg("signin-error", error.message, true);
       return;
     }
-    if (isAdminUser(result.user)) {
-      window.location.href = "/dashboard.html";
-      return;
-    }
-    showSignedIn(email, false);
+    window.location.href = "/dashboard.html";
   });
 
   const forgotForm = document.getElementById("forgot-form") as HTMLFormElement | null;
@@ -236,12 +228,7 @@ function bindForms(): void {
       return;
     }
     clearPasswordRecovery();
-    const session = await getSession();
-    if (isAdminUser(session?.user ?? null)) {
-      window.location.href = "/dashboard.html";
-      return;
-    }
-    showSignedIn(session?.user.email ?? "", false);
+    window.location.href = "/dashboard.html";
   });
 }
 

@@ -19,12 +19,11 @@ import {
   uploadGalleryImage,
   upsertGalleryRow,
 } from "./data/supabase/upload-gallery";
-import { injectLayout } from "./layout";
-import { initMobileMenu } from "./shared";
 import {
   authReady,
   clearPasswordRecovery,
   getSession,
+  isAdminUser,
   isPasswordResetReturn,
   markPasswordRecovery,
   onAuthStateChange,
@@ -1667,7 +1666,8 @@ function showStatus(msg: string, isError = false): void {
   }, 3000);
 }
 
-let dashboardBooted = false;
+let adminBooted = false;
+let memberBooted = false;
 
 function showEl(id: string, visible: boolean): void {
   const el = document.getElementById(id);
@@ -1681,9 +1681,9 @@ function setMsg(id: string, text: string, show: boolean): void {
   el.hidden = !show;
 }
 
-function bootDashboard(email: string): void {
-  if (dashboardBooted) return;
-  dashboardBooted = true;
+function bootAdminDashboard(email: string): void {
+  if (adminBooted) return;
+  adminBooted = true;
 
   const emailEl = document.getElementById("dash-user-email");
   if (emailEl) emailEl.textContent = email;
@@ -1713,11 +1713,26 @@ function bootDashboard(email: string): void {
   renderPanel();
 }
 
+function bootMemberDashboard(email: string): void {
+  if (memberBooted) return;
+  memberBooted = true;
+
+  const emailEl = document.getElementById("dash-member-email");
+  if (emailEl) emailEl.textContent = email;
+
+  document.getElementById("btn-member-signout")?.addEventListener("click", async () => {
+    await signOut();
+    window.location.reload();
+  });
+}
+
 /** Default signed-out view: login only (forgot-password form stays hidden until clicked). */
 function showSignedOut(): void {
   showEl("dash-app", false);
+  showEl("dash-member", false);
   showEl("dash-set-password", false);
   showEl("dash-auth", true);
+  document.body.classList.remove("is-admin", "is-member");
 
   const loginForm = document.getElementById("dash-login-form") as HTMLFormElement | null;
   const resetForm = document.getElementById("dash-reset-form") as HTMLFormElement | null;
@@ -1731,6 +1746,7 @@ function showSignedOut(): void {
 
 function showForgotPassword(): void {
   showEl("dash-app", false);
+  showEl("dash-member", false);
   showEl("dash-set-password", false);
   showEl("dash-auth", true);
 
@@ -1744,18 +1760,25 @@ function showForgotPassword(): void {
   if (showLogin) showLogin.hidden = false;
 }
 
-function showSignedIn(email: string): void {
+function showSignedIn(email: string, admin: boolean): void {
   clearPasswordRecovery();
   showEl("dash-auth", false);
   showEl("dash-set-password", false);
-  showEl("dash-app", true);
-  bootDashboard(email);
-  const bar = document.querySelector(".top-bar");
-  if (bar) {
-    import("./layout").then(({ renderTopBar }) => {
-      bar.outerHTML = renderTopBar({ showDashboard: true });
-    });
+
+  if (admin) {
+    document.body.classList.add("is-admin");
+    document.body.classList.remove("is-member");
+    showEl("dash-member", false);
+    showEl("dash-app", true);
+    bootAdminDashboard(email);
+    return;
   }
+
+  document.body.classList.add("is-member");
+  document.body.classList.remove("is-admin");
+  showEl("dash-app", false);
+  showEl("dash-member", true);
+  bootMemberDashboard(email);
 }
 
 /** Only after clicking the email reset link (never on normal visits). */
@@ -1763,6 +1786,7 @@ function showSetPassword(): void {
   markPasswordRecovery();
   showEl("dash-auth", false);
   showEl("dash-app", false);
+  showEl("dash-member", false);
   showEl("dash-set-password", true);
 }
 
@@ -1810,7 +1834,7 @@ function bindAuthForms(): void {
       return;
     }
     const session = await getSession();
-    if (session?.user.email) showSignedIn(session.user.email);
+    if (session?.user) showSignedIn(session.user.email ?? "", isAdminUser(session.user));
   });
 
   resetForm?.addEventListener("submit", async (e) => {
@@ -1867,13 +1891,11 @@ function bindAuthForms(): void {
     }
     clearPasswordRecovery();
     const session = await getSession();
-    showSignedIn(session?.user.email ?? "");
+    showSignedIn(session?.user.email ?? "", isAdminUser(session?.user));
   });
 }
 
 async function initDashboardAuth(): Promise<void> {
-  injectLayout("dashboard");
-  initMobileMenu();
   bindAuthForms();
 
   // Never show set-password on a normal visit
@@ -1905,7 +1927,7 @@ async function initDashboardAuth(): Promise<void> {
       return;
     }
 
-    if (session?.user) showSignedIn(session.user.email ?? "");
+    if (session?.user) showSignedIn(session.user.email ?? "", isAdminUser(session.user));
     else showSignedOut();
   });
 
@@ -1920,7 +1942,7 @@ async function initDashboardAuth(): Promise<void> {
     showSignedOut();
     setMsg("dash-login-error", "", false);
   } else if (session?.user) {
-    showSignedIn(session.user.email ?? "");
+    showSignedIn(session.user.email ?? "", isAdminUser(session.user));
   } else {
     showSignedOut();
   }

@@ -15,13 +15,10 @@
     <link rel="stylesheet" href="/css/dashboard.css" />
   </head>
   <body class="dashboard-body">
-    <div id="top-bar-mount"></div>
-    <div id="header-mount"></div>
-
     <div id="dash-auth" class="dash-auth" hidden>
       <div class="dash-auth__card">
-        <h1 class="dash-auth__title">Dashboard sign in</h1>
-        <p class="dash-auth__lead">Sign in with your IPS admin account to manage site content.</p>
+        <h1 class="dash-auth__title">Sign in</h1>
+        <p class="dash-auth__lead">Use your IPS account to open the dashboard.</p>
         <form id="dash-login-form" class="dash-auth__form">
           <label class="dash-field">
             <span>Email</span>
@@ -47,13 +44,16 @@
           <button type="button" class="dash-auth__link" id="dash-show-reset">Forgot password?</button>
           <button type="button" class="dash-auth__link" id="dash-show-login" hidden>Back to sign in</button>
         </p>
+        <p class="dash-auth__back">
+          <a href="/index.html">← Back to site</a>
+        </p>
       </div>
     </div>
 
     <div id="dash-set-password" class="dash-auth" hidden>
       <div class="dash-auth__card">
         <h1 class="dash-auth__title">Set a new password</h1>
-        <p class="dash-auth__lead">You opened the reset link from your email. Choose a new password for your account.</p>
+        <p class="dash-auth__lead">Choose a new password for your account.</p>
         <form id="dash-password-form" class="dash-auth__form">
           <label class="dash-field">
             <span>New password</span>
@@ -72,18 +72,38 @@
       </div>
     </div>
 
-    <div id="dash-app" hidden>
-      <div class="dashboard-toolbar">
-        <div class="dashboard-toolbar__inner">
-          <p class="dashboard-toolbar__label">Content dashboard</p>
-          <div class="dashboard-toolbar__actions">
-            <span class="dashboard-toolbar__user" id="dash-user-email"></span>
-            <button type="button" class="btn btn--ghost" id="btn-signout">Sign out</button>
-            <button type="button" class="btn btn--ghost" id="btn-reset">Reset</button>
-            <button type="button" class="btn btn--primary" id="btn-save">Save</button>
-          </div>
+    <div id="dash-member" class="dash-member" hidden>
+      <header class="dash-shell-bar">
+        <p class="dash-shell-bar__brand">IPS</p>
+        <div class="dash-shell-bar__actions">
+          <span class="dash-shell-bar__user" id="dash-member-email"></span>
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-member-signout">Sign out</button>
+          <a href="/index.html" class="btn btn--primary btn--sm" id="btn-exit-member">Exit dashboard</a>
+        </div>
+      </header>
+      <div class="dash-member__body">
+        <h1 class="dash-member__title">Welcome</h1>
+        <p class="dash-member__text">You are signed in to the Indian Peptide Society.</p>
+        <div class="dash-member__links">
+          <a href="/membership.html">Membership</a>
+          <a href="/events.html">Events</a>
+          <a href="/registration.html">Registration</a>
+          <a href="/contact.html">Contact</a>
         </div>
       </div>
+    </div>
+
+    <div id="dash-app" hidden>
+      <header class="dash-shell-bar">
+        <p class="dash-shell-bar__brand">IPS Admin</p>
+        <div class="dash-shell-bar__actions">
+          <span class="dash-shell-bar__user" id="dash-user-email"></span>
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-reset">Reset</button>
+          <button type="button" class="btn btn--primary btn--sm" id="btn-save">Save</button>
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-signout">Sign out</button>
+          <a href="/index.html" class="btn btn--outline btn--sm" id="btn-exit-admin">Exit dashboard</a>
+        </div>
+      </header>
 
       <div class="dashboard-layout">
         <nav class="dashboard-list" id="dashboard-nav" aria-label="Manage content"></nav>

@@ -50,9 +50,21 @@ export async function signUpWithPassword(email: string, password: string, fullNa
   return client.auth.signInWithPassword({ email, password });
 }
 
+/** Hardcoded admin emails (also set app_metadata.role = "admin" in Supabase). */
+const ADMIN_EMAILS = new Set([
+  "hn.gopi@iiserpune.ac.in",
+  "rafeequemavoor@gmail.com",
+]);
+
+export function isAdminEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return ADMIN_EMAILS.has(email.trim().toLowerCase());
+}
+
 export function isAdminUser(user: User | null | undefined): boolean {
   if (!user) return false;
-  return user.app_metadata?.role === "admin";
+  if (user.app_metadata?.role === "admin") return true;
+  return isAdminEmail(user.email);
 }
 
 function urlLooksLikeRecoveryReturn(): boolean {
