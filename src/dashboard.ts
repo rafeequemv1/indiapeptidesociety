@@ -208,7 +208,7 @@ function esc(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 }
 
-const EDIT_ICON = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const EDIT_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
 
 function panelHead(title: string, desc: string, addLabel?: string): string {
   const addBtn = addLabel
@@ -229,7 +229,7 @@ function listRow(
   meta: string,
   index: number,
   canReorder: boolean,
-  opts?: { editLabel?: string; canDelete?: boolean },
+  opts?: { editLabel?: string; canDelete?: boolean; thumb?: string },
 ): string {
   const reorder = canReorder
     ? `<button type="button" data-move="up" data-index="${index}" aria-label="Move up">↑</button>
@@ -237,8 +237,12 @@ function listRow(
     : "";
   const editLabel = opts?.editLabel ?? "Edit";
   const canDelete = opts?.canDelete ?? canReorder;
+  const thumb = opts?.thumb
+    ? `<img class="dash-row__thumb" src="${esc(opts.thumb)}" alt="" loading="lazy" />`
+    : "";
   return `
     <div class="dash-row" data-index="${index}">
+      ${thumb}
       <div class="dash-row__info">
         <span class="dash-row__title">${esc(title) || "Untitled"}</span>
         <span class="dash-row__meta">${esc(meta)}</span>
@@ -356,13 +360,17 @@ function renderBlog(): string {
     .map((item, i) => listRow(item.title, `${item.tag} · ${item.date} · ${item.slug}`, i, true))
     .join("");
   return `
-    ${panelHead("Blog Posts", "Articles on the blog page. Write with the rich editor — headings, lists, links, and images.", "+ Add post")}
+    ${panelHead("Blog Posts", "Write posts like a document. Simple formatting toolbar — headings, lists, links, and images.", "+ Add post")}
     <div class="dash-list">${items}</div>`;
 }
 
 function renderGallery(): string {
   const items = content.galleryImages
-    .map((item, i) => listRow(item.title || "Untitled", item.image ? "Image set" : "No image", i, true))
+    .map((item, i) =>
+      listRow(item.title || "Untitled", item.image ? "Image set" : "No image", i, true, {
+        thumb: item.image || undefined,
+      }),
+    )
     .join("");
   return `
     ${panelHead("Gallery", "Photos on the Gallery page. Upload an image and set a title. Files go to the Supabase gallery bucket when signed in.", "+ Add image")}
@@ -663,16 +671,15 @@ function getModalFields(): FormField[] {
       { key: "excerpt", label: "Excerpt", multiline: true },
       {
         key: "coverImage",
-        label: "Thumbnail image",
+        label: "Cover image",
         type: "file",
         accept: "image/*",
-        hint: "Shown on the blog list and at the top of the article. JPG/PNG/WebP, max 2 MB.",
+        hint: "Shown on the blog list and at the top of the article.",
       },
       {
         key: "body",
-        label: "Article body",
+        label: "Document",
         type: "richtext",
-        hint: "Bold, headings, bullet/numbered lists, links, and inline images.",
       },
     ];
   }
@@ -1026,6 +1033,8 @@ function openModal(index: number | "new"): void {
   const readOnly = activeSection === "inbox-contact" || activeSection === "reg-entries";
   const isBlog = activeSection === "blog";
   dialog?.classList.toggle("dash-modal__dialog--wide", isBlog);
+  dialog?.classList.toggle("dash-modal__dialog--doc", isBlog);
+  form.classList.toggle("dash-modal__form--doc", isBlog);
   form.innerHTML = getModalFields().map((f) => fieldHtml(f, data[f.key] ?? "")).join("");
   if (readOnly) {
     form.querySelectorAll("input, textarea, select").forEach((el) => {
@@ -1096,10 +1105,12 @@ function closeModal(): void {
   modalIndex = null;
   const modal = document.getElementById("dash-modal");
   const dialog = modal?.querySelector(".dash-modal__dialog");
+  const form = document.getElementById("dash-modal-form");
   const saveBtn = document.getElementById("dash-modal-save");
   destroyBlogEditor();
   if (modal) modal.hidden = true;
-  dialog?.classList.remove("dash-modal__dialog--wide");
+  dialog?.classList.remove("dash-modal__dialog--wide", "dash-modal__dialog--doc");
+  form?.classList.remove("dash-modal__form--doc");
   if (saveBtn) saveBtn.hidden = false;
   document.body.style.overflow = "";
 }

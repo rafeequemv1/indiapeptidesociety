@@ -13,18 +13,12 @@ function buildShell(host: HTMLElement): { toolbar: HTMLElement; mount: HTMLEleme
     <div class="tiptap-toolbar" role="toolbar" aria-label="Formatting">
       ${btn("<b>B</b>", "Bold", "bold", "bold")}
       ${btn("<i>I</i>", "Italic", "italic", "italic")}
-      ${btn("<u>U</u>", "Underline", "underline", "underline")}
-      ${btn("S", "Strikethrough", "strike", "strike")}
       <span class="tiptap-toolbar__sep" aria-hidden="true"></span>
-      ${btn("H2", "Heading 2", "h2")}
-      ${btn("H3", "Heading 3", "h3")}
+      ${btn("H", "Heading", "h2")}
+      ${btn("•", "Bullet list", "bullet")}
+      ${btn("1.", "Numbered list", "ordered")}
       <span class="tiptap-toolbar__sep" aria-hidden="true"></span>
-      ${btn("• List", "Bullet list", "bullet")}
-      ${btn("1. List", "Numbered list", "ordered")}
-      ${btn("❝", "Quote", "quote")}
-      <span class="tiptap-toolbar__sep" aria-hidden="true"></span>
-      ${btn("Link", "Add / edit link", "link")}
-      ${btn("Unlink", "Remove link", "unlink")}
+      ${btn("Link", "Add link", "link")}
       ${btn("Image", "Insert image", "image")}
       <span class="tiptap-toolbar__sep" aria-hidden="true"></span>
       ${btn("↩", "Undo", "undo")}
@@ -48,17 +42,11 @@ function syncToolbar(): void {
   toolbarRoot.querySelectorAll<HTMLButtonElement>('[data-action="h2"]').forEach((el) => {
     el.classList.toggle("is-active", editor!.isActive("heading", { level: 2 }));
   });
-  toolbarRoot.querySelectorAll<HTMLButtonElement>('[data-action="h3"]').forEach((el) => {
-    el.classList.toggle("is-active", editor!.isActive("heading", { level: 3 }));
-  });
   toolbarRoot.querySelectorAll<HTMLButtonElement>('[data-action="bullet"]').forEach((el) => {
     el.classList.toggle("is-active", editor!.isActive("bulletList"));
   });
   toolbarRoot.querySelectorAll<HTMLButtonElement>('[data-action="ordered"]').forEach((el) => {
     el.classList.toggle("is-active", editor!.isActive("orderedList"));
-  });
-  toolbarRoot.querySelectorAll<HTMLButtonElement>('[data-action="quote"]').forEach((el) => {
-    el.classList.toggle("is-active", editor!.isActive("blockquote"));
   });
   toolbarRoot.querySelectorAll<HTMLButtonElement>('[data-action="link"]').forEach((el) => {
     el.classList.toggle("is-active", editor!.isActive("link"));
@@ -82,26 +70,14 @@ function bindToolbar(host: HTMLElement): void {
       case "italic":
         editor.chain().focus().toggleItalic().run();
         break;
-      case "underline":
-        editor.chain().focus().toggleUnderline().run();
-        break;
-      case "strike":
-        editor.chain().focus().toggleStrike().run();
-        break;
       case "h2":
         editor.chain().focus().toggleHeading({ level: 2 }).run();
-        break;
-      case "h3":
-        editor.chain().focus().toggleHeading({ level: 3 }).run();
         break;
       case "bullet":
         editor.chain().focus().toggleBulletList().run();
         break;
       case "ordered":
         editor.chain().focus().toggleOrderedList().run();
-        break;
-      case "quote":
-        editor.chain().focus().toggleBlockquote().run();
         break;
       case "link": {
         const prev = editor.getAttributes("link").href as string | undefined;
@@ -114,9 +90,6 @@ function bindToolbar(host: HTMLElement): void {
         }
         break;
       }
-      case "unlink":
-        editor.chain().focus().extendMarkRange("link").unsetLink().run();
-        break;
       case "image":
         fileInput?.click();
         break;
@@ -190,7 +163,7 @@ export async function mountBlogEditor(host: HTMLElement, initialHtml: string): P
         HTMLAttributes: { class: "blog-inline-image" },
       }),
       Placeholder.configure({
-        placeholder: "Write your article… Use the toolbar for headings, lists, links, and images.",
+        placeholder: "Start writing…",
       }),
     ],
     content: initialHtml || "<p></p>",

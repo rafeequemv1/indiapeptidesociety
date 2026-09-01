@@ -78,7 +78,18 @@
         <div class="dash-shell-bar__actions">
           <span class="dash-shell-bar__user" id="dash-member-email"></span>
           <button type="button" class="btn btn--ghost btn--sm" id="btn-member-signout">Sign out</button>
-          <a href="/index.html" class="btn btn--primary btn--sm" id="btn-exit-member">Exit dashboard</a>
+          <a
+            href="/index.html"
+            class="dash-preview-btn"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Preview website"
+          >
+            Preview
+          </a>
+          <a href="/index.html" class="dash-close-btn" id="btn-exit-member" title="Close dashboard" aria-label="Close dashboard">
+            <span aria-hidden="true">&times;</span>
+          </a>
         </div>
       </header>
       <div class="dash-member__body">
@@ -101,12 +112,26 @@
           <button type="button" class="btn btn--ghost btn--sm" id="btn-reset">Reset</button>
           <button type="button" class="btn btn--primary btn--sm" id="btn-save">Save</button>
           <button type="button" class="btn btn--ghost btn--sm" id="btn-signout">Sign out</button>
-          <a href="/index.html" class="btn btn--outline btn--sm" id="btn-exit-admin">Exit dashboard</a>
+          <a
+            href="/index.html"
+            class="dash-preview-btn"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Preview website"
+          >
+            Preview
+          </a>
+          <a href="/index.html" class="dash-close-btn" id="btn-exit-admin" title="Close dashboard" aria-label="Close dashboard">
+            <span aria-hidden="true">&times;</span>
+          </a>
         </div>
       </header>
 
       <div class="dashboard-layout">
-        <nav class="dashboard-list" id="dashboard-nav" aria-label="Manage content"></nav>
+        <aside class="dashboard-sidebar">
+          <p class="dashboard-sidebar__title">Sections</p>
+          <nav class="dashboard-list" id="dashboard-nav" aria-label="Manage content"></nav>
+        </aside>
 
         <div class="dashboard-main">
           <nav class="dashboard-main__breadcrumb" id="breadcrumb" aria-label="Breadcrumb"></nav>
