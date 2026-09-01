@@ -27,20 +27,6 @@ const SERVICE_ICONS = [
   `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
 ];
 
-function newsImageHtml(image: string, title: string): string {
-  if (image) {
-    return `<img src="${escapeHtml(image)}" alt="${escapeHtml(title)}" loading="lazy" />`;
-  }
-  return `
-    <div class="news-card__placeholder" aria-hidden="true">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <circle cx="8.5" cy="8.5" r="1.5"/>
-        <path d="m21 15-5-5L5 21"/>
-      </svg>
-    </div>`;
-}
-
 function personCard(member: { name: string; role: string; affiliation: string; image: string }, centered = false): string {
   const mod = centered ? " person-card--centered" : "";
   const roleBlock = member.role
@@ -100,9 +86,6 @@ export function renderHomePage(): void {
       .map(
         (item) => `
       <article class="news-card">
-        <div class="news-card__image">
-          ${newsImageHtml(item.image, item.title)}
-        </div>
         <div class="news-card__body">
           <div class="news-card__meta">
             <span class="tag">${escapeHtml(item.tag)}</span>
