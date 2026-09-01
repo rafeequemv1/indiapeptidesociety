@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Symposium Registration | Indian Peptide Society</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta
+      name="description"
+      content="Register for the Indian Peptide Symposium — dates, venue, fees, abstract upload, and online registration."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div id="top-bar-mount"></div>
+    <div id="header-mount"></div>
+
+    <main id="registration-page">
+      <section class="page-hero page-hero--registration">
+        <div class="container page-hero__registration">
+          <h1 class="page-hero__title" id="symp-reg-title">Symposium Registration</h1>
+          <p class="page-hero__lead" id="symp-reg-subtitle"></p>
+          <div class="reg-hero-details" id="symp-reg-details"></div>
+        </div>
+      </section>
+
+      <section id="registration-closed" class="section section--cream" hidden>
+        <div class="container container--narrow registration-closed">
+          <h2 class="heading-md">Registration is currently closed</h2>
+          <p>
+            Online symposium registration is not open at the moment. Please check back later, or
+            browse upcoming events for the latest programme information.
+          </p>
+          <div class="registration-closed__actions">
+            <a href="/events.html" class="btn btn--primary">View events</a>
+            <a href="/contact.html" class="btn btn--outline">Contact us</a>
+          </div>
+        </div>
+      </section>
+
+      <div id="registration-open" hidden>
+        <section id="symposium-registration" class="symp-reg symp-reg--centered section section--cream">
+          <div class="container">
+            <div class="symp-reg__form-wrap">
+              <form id="symposium-reg-form" class="symp-reg-form">
+                <div class="form-group">
+                  <label for="reg-name">Full name</label>
+                  <input id="reg-name" name="name" type="text" required autocomplete="name" />
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="reg-email">Email</label>
+                    <input id="reg-email" name="email" type="email" required autocomplete="email" />
+                  </div>
+                  <div class="form-group">
+                    <label for="reg-phone">Phone</label>
+                    <input id="reg-phone" name="phone" type="tel" required autocomplete="tel" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="reg-affiliation">Affiliation / Institution</label>
+                  <input id="reg-affiliation" name="affiliation" type="text" required />
+                </div>
+                <div class="form-group">
+                  <label for="reg-category">Category</label>
+                  <select id="reg-category" name="category" required>
+                    <option value="">Select category</option>
+                    <option value="Student">Student</option>
+                    <option value="Academia">Academia</option>
+                    <option value="Industry">Industry</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="reg-abstract-title">Abstract title <span class="form-optional">(optional)</span></label>
+                  <input id="reg-abstract-title" name="abstractTitle" type="text" placeholder="Title of your abstract" />
+                </div>
+                <div class="form-group">
+                  <label for="reg-abstract-file">Upload abstract <span class="form-optional">(optional)</span></label>
+                  <input
+                    id="reg-abstract-file"
+                    name="abstractFile"
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  />
+                  <p class="form-hint">PDF or Word, max 5&nbsp;MB. Stored securely; visible in the admin dashboard.</p>
+                </div>
+                <button type="submit" class="btn btn--primary btn--full" id="symp-reg-submit">Register &amp; Pay</button>
+                <p class="symp-reg__hint">After submitting, you can download a receipt. Razorpay payment opens when the link is configured.</p>
+              </form>
+              <div id="symposium-reg-success" class="contact-success" hidden>
+                <p class="contact-success__title">Registration received</p>
+                <p id="symposium-reg-success-msg">Thank you. We have recorded your details.</p>
+                <div class="symp-reg__receipt-actions" id="symposium-reg-receipt-actions" hidden>
+                  <button type="button" class="btn btn--primary" id="btn-download-receipt">Download receipt</button>
+                  <button type="button" class="btn btn--outline" id="btn-print-receipt">Print / Save PDF</button>
+                </div>
+                <p class="symp-reg__receipt-hint" id="symposium-reg-receipt-hint"></p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div id="footer-mount"></div>
+    <script type="module" src="/src/registration.ts"></script>
+  </body>
+</html>

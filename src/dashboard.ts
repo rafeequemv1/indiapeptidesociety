@@ -375,7 +375,7 @@ function renderRegSettings(): string {
   const status = r.enabled ? "Visible on home" : "Hidden";
   const pay = r.razorpayUrl ? "Razorpay link set" : "Razorpay link not set yet";
   return `
-    ${panelHead("Registration Settings", "Home page symposium registration section. Add Razorpay payment URL when ready.")}
+    ${panelHead("Registration Settings", "Dedicated registration page (/registration.html). Add Razorpay payment URL when ready.")}
     <div class="dash-list">
       ${listRow(r.title || "Symposium Registration", `${status} · ${pay} · ${r.dates}`, 0, false)}
     </div>`;
@@ -693,7 +693,7 @@ function getModalFields(): FormField[] {
   }
   if (activeSection === "reg-settings") {
     return [
-      { key: "enabled", label: "Show registration section on home page", type: "checkbox" },
+      { key: "enabled", label: "Open registration page (show Register CTA on home)", type: "checkbox" },
       { key: "title", label: "Section title" },
       { key: "subtitle", label: "Subtitle", multiline: true },
       { key: "dates", label: "Dates" },

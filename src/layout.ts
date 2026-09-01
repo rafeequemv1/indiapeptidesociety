@@ -3,6 +3,7 @@ export type PageId =
   | "membership"
   | "members"
   | "events"
+  | "registration"
   | "blog"
   | "gallery"
   | "faq"
@@ -21,6 +22,7 @@ const navItems: { label: string; href: string; id: PageId }[] = [
   { label: "Membership", href: "/membership.html", id: "membership" },
   { label: "Members", href: "/members.html", id: "members" },
   { label: "Events", href: "/events.html", id: "events" },
+  { label: "Registration", href: "/registration.html", id: "registration" },
   { label: "Blog", href: "/blog.html", id: "blog" },
   { label: "Gallery", href: "/gallery.html", id: "gallery" },
   { label: "Faq", href: "/faq.html", id: "faq" },
@@ -33,6 +35,7 @@ function navLink(item: (typeof navItems)[0], active: PageId): string {
     (active === "membership" && item.label === "Membership") ||
     (active === "members" && item.label === "Members") ||
     (active === "events" && item.label === "Events") ||
+    (active === "registration" && item.label === "Registration") ||
     (active === "blog" && item.label === "Blog") ||
     (active === "gallery" && item.label === "Gallery") ||
     (active === "faq" && item.label === "Faq") ||
@@ -119,6 +122,7 @@ export function renderFooter(): string {
           <ul>
             <li><a href="/index.html">Home</a></li>
             <li><a href="/events.html">Upcoming Events</a></li>
+            <li><a href="/registration.html">Symposium Registration</a></li>
             <li><a href="/members.html">Members</a></li>
             <li><a href="/members.html?tab=permanent">Permanent Members</a></li>
             <li><a href="/blog.html">Blog</a></li>
