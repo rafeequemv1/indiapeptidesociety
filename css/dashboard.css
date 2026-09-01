@@ -341,7 +341,8 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.3rem;
-  margin-bottom: 0.75rem;
+  margin: 0 auto 0.75rem;
+  max-width: 40rem;
   font-size: 0.75rem;
   color: #9ca3af;
 }
@@ -352,6 +353,8 @@
 }
 
 .dashboard-main__panel {
+  max-width: 40rem;
+  margin: 0 auto;
   background: transparent;
   border: none;
   border-radius: 0;
@@ -359,7 +362,8 @@
 }
 
 .dashboard-main__status {
-  margin-top: 0.65rem;
+  max-width: 40rem;
+  margin: 0.65rem auto 0;
   font-size: 0.75rem;
   color: #16a34a;
   min-height: 1.1rem;
@@ -449,8 +453,8 @@
 .dash-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  justify-content: flex-start;
+  gap: 0.85rem;
   padding: 0.55rem 0;
   background: transparent;
   border-bottom: 1px solid #ecece8;
@@ -475,7 +479,8 @@
 
 .dash-row__info {
   min-width: 0;
-  flex: 1;
+  flex: 0 1 auto;
+  max-width: 22rem;
 }
 
 .dash-row__title {
@@ -503,6 +508,7 @@
   flex-shrink: 0;
   align-items: center;
   gap: 0.35rem;
+  margin-left: 0.25rem;
 }
 
 .dash-row__actions button {
