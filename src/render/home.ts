@@ -33,10 +33,7 @@ function personCard(member: { name: string; role: string; affiliation: string; i
     ? `<p class="person-card__role">${escapeHtml(member.role)}</p><div class="person-card__line"></div>`
     : "";
   return `
-    <article class="person-card${mod}">
-      <div class="person-card__photo">
-        <img src="${escapeHtml(member.image)}" alt="${escapeHtml(member.name)}" loading="lazy" />
-      </div>
+    <article class="person-card person-card--text${mod}">
       <div class="person-card__body">
         <h3 class="person-card__name">${escapeHtml(member.name)}</h3>
         ${roleBlock}

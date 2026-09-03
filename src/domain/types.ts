@@ -72,6 +72,16 @@ export interface PermanentMember {
   isFounder?: boolean;
 }
 
+/** Full society member directory (admin-managed “All Members” list). */
+export interface SocietyMember {
+  name: string;
+  /** Canonical number, e.g. IPS-MEM-000470 */
+  registrationNo?: string;
+  membershipNo?: string;
+  affiliation?: string;
+  city?: string;
+}
+
 export interface SymposiumAttendee {
   name: string;
   affiliation?: string;
@@ -167,6 +177,8 @@ export interface SiteContent {
   pastStudentSymposia: SymposiumEvent[];
   founderMembers: FounderMember[];
   permanentMembers: PermanentMember[];
+  /** Full member directory shown under Members → All Members */
+  allMembers: SocietyMember[];
   /** @deprecated Migrated to permanentMembers */
   directoryMembers?: PermanentMember[];
   symposiumAttendees: SymposiumAttendee[];
@@ -178,4 +190,9 @@ export interface SiteContent {
   symposiumRegistrations: SymposiumRegistration[];
   totalMembers: number;
   faqItems: FaqItem[];
+  /** Scalable counters for IPS-MEM- / IPS-SYM-YYYY- numbers */
+  registrationCounters: {
+    member: number;
+    symposium: Record<string, number>;
+  };
 }

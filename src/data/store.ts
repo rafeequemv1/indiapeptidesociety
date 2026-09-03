@@ -16,6 +16,7 @@ export type {
   PermanentMember,
   SymposiumAttendee,
   RecognizedPerson,
+  SocietyMember,
   BlogPost,
   GalleryImage,
   FaqItem,
@@ -26,8 +27,13 @@ export type {
   SiteContent,
 } from "../domain/types";
 
-import type { PermanentMember, SiteContent, TeamMember } from "../domain/types";
+import type { PermanentMember, SiteContent, SocietyMember, TeamMember } from "../domain/types";
 import { defaultContent } from "../domain/defaults";
+import {
+  formatMemberNo,
+  normalizeRegistrationCounters,
+  parseMemberSeq,
+} from "../lib/registration-numbers";
 
 export { defaultContent };
 
@@ -72,9 +78,39 @@ function normalizePermanentMembers(parsed: Partial<SiteContent>): PermanentMembe
   return structuredClone(defaultContent.permanentMembers);
 }
 
+function normalizeAllMembers(
+  parsed: Partial<SiteContent>,
+  permanentMembers: PermanentMember[],
+): SocietyMember[] {
+  if (Array.isArray(parsed.allMembers) && parsed.allMembers.length) {
+    return parsed.allMembers.map((m) => {
+      const legacy = m.membershipNo ? String(m.membershipNo) : "";
+      const registrationNo =
+        m.registrationNo?.trim() ||
+        (parseMemberSeq(legacy) ? formatMemberNo(parseMemberSeq(legacy)) : legacy) ||
+        "";
+      return {
+        name: m.name ?? "",
+        registrationNo,
+        membershipNo: legacy || registrationNo,
+        affiliation: m.affiliation ?? "",
+        city: m.city ?? "",
+      };
+    });
+  }
+  return permanentMembers.map((m) => ({
+    name: m.name,
+    membershipNo: String(m.membershipNo),
+    registrationNo: formatMemberNo(m.membershipNo),
+    affiliation: "",
+    city: "",
+  }));
+}
+
 function normalizeContent(parsed: Partial<SiteContent>): SiteContent {
   const base = structuredClone(defaultContent);
   const permanentMembers = normalizePermanentMembers(parsed);
+  const allMembers = normalizeAllMembers(parsed, permanentMembers);
   const merged: SiteContent = {
     ...base,
     ...parsed,
@@ -91,6 +127,7 @@ function normalizeContent(parsed: Partial<SiteContent>): SiteContent {
     lifetimeAwards: parsed.lifetimeAwards?.length ? parsed.lifetimeAwards : base.lifetimeAwards,
     team: normalizeTeam(parsed.team),
     permanentMembers,
+    allMembers,
     symposiumAttendees: parsed.symposiumAttendees?.length
       ? parsed.symposiumAttendees
       : base.symposiumAttendees,
@@ -113,6 +150,11 @@ function normalizeContent(parsed: Partial<SiteContent>): SiteContent {
     },
     contactMessages: Array.isArray(parsed.contactMessages) ? parsed.contactMessages : [],
     symposiumRegistrations: normalizeRegistrations(parsed.symposiumRegistrations),
+    registrationCounters: normalizeRegistrationCounters(parsed.registrationCounters, {
+      allMembers,
+      permanentMembers,
+      symposiumRegistrations: normalizeRegistrations(parsed.symposiumRegistrations),
+    }),
   };
   delete merged.directoryMembers;
   return merged;

@@ -1,6 +1,10 @@
 import { loadContent, saveContent, newId, escapeHtml } from "../data/store";
 import { abstractStoragePath, fileToAbstractPayload } from "../lib/abstract-file";
-import { buildReceiptNumber, downloadReceipt, openReceiptForPrint } from "../lib/receipt";
+import { downloadReceipt, openReceiptForPrint } from "../lib/receipt";
+import {
+  allocateSymposiumNumber,
+  symposiumEventYear,
+} from "../lib/registration-numbers";
 import type { SymposiumRegistration, SymposiumRegistrationConfig } from "../domain/types";
 
 export function renderRegistrationPage(): void {
@@ -141,6 +145,10 @@ export function bindRegistrationForm(config: SymposiumRegistrationConfig): void 
         }
 
         const content = loadContent();
+        const eventYear = symposiumEventYear(
+          content.symposiumRegistration.dates || content.symposiumRegistration.title || "",
+          new Date(submittedAt).getFullYear(),
+        );
         const registration: SymposiumRegistration = {
           id,
           name,
@@ -151,15 +159,7 @@ export function bindRegistrationForm(config: SymposiumRegistrationConfig): void 
           submittedAt,
           paymentStatus: "pending",
           amountLabel: content.symposiumRegistration.feeNote || undefined,
-          receiptNo: buildReceiptNumber({
-            id,
-            name,
-            email,
-            phone,
-            affiliation,
-            category,
-            submittedAt,
-          }),
+          receiptNo: allocateSymposiumNumber(content, eventYear),
           ...abstractFields,
         };
         content.symposiumRegistrations.unshift(registration);

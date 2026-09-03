@@ -21,8 +21,8 @@ function formatWhen(iso: string): string {
 export function buildReceiptNumber(reg: SymposiumRegistration): string {
   if (reg.receiptNo) return reg.receiptNo;
   const year = new Date(reg.submittedAt).getFullYear() || new Date().getFullYear();
-  const short = reg.id.slice(-6).toUpperCase();
-  return `IPS-${year}-${short}`;
+  const short = reg.id.replace(/[^a-zA-Z0-9]/g, "").slice(-6).toUpperCase() || "000001";
+  return `IPS-SYM-${year}-${short.padStart(6, "0").slice(-6)}`;
 }
 
 /** Printable HTML receipt (downloadable). Ready for Razorpay payment id when present. */

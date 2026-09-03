@@ -7,6 +7,7 @@ import type {
   LifetimeAward,
   NewsItem,
   PermanentMember,
+  SocietyMember,
   RecognizedPerson,
   ServiceItem,
   SiteContent,
@@ -85,6 +86,16 @@ export function mapPermanent(row: Tables["permanent_members"]["Row"]): Permanent
     name: row.name,
     membershipNo: row.membership_no,
     isFounder: row.is_founder,
+  };
+}
+
+export function mapSocietyMember(row: Tables["society_members"]["Row"]): SocietyMember {
+  return {
+    name: row.name,
+    registrationNo: row.membership_no || undefined,
+    membershipNo: row.membership_no || undefined,
+    affiliation: row.affiliation || undefined,
+    city: row.city || undefined,
   };
 }
 
@@ -204,6 +215,7 @@ export function emptySiteContent(): SiteContent {
     pastStudentSymposia: [],
     founderMembers: [],
     permanentMembers: [],
+    allMembers: [],
     symposiumAttendees: [],
     recognizedPeople: [],
     blogPosts: [],
@@ -222,5 +234,6 @@ export function emptySiteContent(): SiteContent {
     symposiumRegistrations: [],
     totalMembers: 0,
     faqItems: [],
+    registrationCounters: { member: 0, symposium: {} },
   };
 }

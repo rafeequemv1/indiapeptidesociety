@@ -13,6 +13,7 @@ import {
   mapGallery,
   mapNews,
   mapPermanent,
+  mapSocietyMember,
   mapRecognized,
   mapRegistration,
   mapRegistrationSettings,
@@ -51,6 +52,7 @@ export function createSupabaseRepository(): ContentRepository {
         symposiaRes,
         faqRes,
         permanentRes,
+        societyMembersRes,
         attendeesRes,
         recognizedRes,
         blogRes,
@@ -69,6 +71,7 @@ export function createSupabaseRepository(): ContentRepository {
         client.from("symposia").select("*").order("sort_order"),
         client.from("faq_items").select("*").eq("published", true).order("sort_order"),
         client.from("permanent_members").select("*").order("sort_order"),
+        client.from("society_members").select("*").order("sort_order"),
         client.from("symposium_attendees").select("*").order("sort_order"),
         client.from("recognized_people").select("*").order("sort_order"),
         client.from("blog_posts").select("*").eq("published", true).order("sort_order"),
@@ -103,6 +106,9 @@ export function createSupabaseRepository(): ContentRepository {
         content.founderMembers = permanents
           .filter((m) => m.is_founder)
           .map((m) => ({ name: m.name, title: "", role: "Founder" }));
+      }
+      if (societyMembersRes.data?.length) {
+        content.allMembers = societyMembersRes.data.map(mapSocietyMember);
       }
       if (attendeesRes.data) content.symposiumAttendees = attendeesRes.data.map(mapAttendee);
       if (recognizedRes.data) content.recognizedPeople = recognizedRes.data.map(mapRecognized);

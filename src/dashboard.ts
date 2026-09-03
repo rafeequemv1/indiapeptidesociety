@@ -6,6 +6,7 @@ import {
   type SymposiumEvent,
   type NewsItem,
   type PermanentMember,
+  type SocietyMember,
   type SymposiumAttendee,
   type RecognizedPerson,
   type BlogPost,
@@ -36,6 +37,7 @@ import {
 } from "./auth/session";
 import { downloadTextFile, parseCsv, readFileAsText, readImageAsDataUrl, toCsv } from "./lib/csv";
 import { destroyBlogEditor, getBlogEditorHtml, mountBlogEditor } from "./lib/blog-editor";
+import { allocateMemberNumber } from "./lib/registration-numbers";
 
 type SectionId =
   | "announcement"
@@ -46,6 +48,7 @@ type SectionId =
   | "events-past"
   | "events-student"
   | "members-permanent"
+  | "members-all"
   | "members-executive"
   | "members-attendees"
   | "members-recognized"
@@ -167,6 +170,7 @@ const NAV: NavItem[] = [
   { id: "events-past", label: "Past Symposia", breadcrumb: ["Dashboard", "Events", "Past"] },
   { id: "events-student", label: "Student Symposia", breadcrumb: ["Dashboard", "Events", "Student"] },
   { id: "members-permanent", label: "Permanent Members", breadcrumb: ["Dashboard", "Members", "Permanent"] },
+  { id: "members-all", label: "All Members", breadcrumb: ["Dashboard", "Members", "All Members"] },
   { id: "members-executive", label: "Executive Members", breadcrumb: ["Dashboard", "Members", "Executive"] },
   { id: "members-attendees", label: "Symposium Attendees", breadcrumb: ["Dashboard", "Members", "Attendees"] },
   { id: "members-recognized", label: "Recognised People", breadcrumb: ["Dashboard", "Members", "Recognised"] },
@@ -178,8 +182,8 @@ const NAV: NavItem[] = [
 const NAV_GROUPS: { label: string; items: SectionId[] }[] = [
   { label: "Home", items: ["announcement", "news"] },
   { label: "Registration", items: ["reg-settings", "reg-entries"] },
-  { label: "Events", items: ["events-upcoming", "events-past", "events-student"] },
-  { label: "Members", items: ["members-permanent", "members-executive", "members-attendees", "members-recognized"] },
+  { label: "Members", items: ["members-all", "members-permanent", "members-executive", "members-attendees", "members-recognized"] },
+  { label: "Symposiums", items: ["events-upcoming", "events-past", "events-student"] },
   { label: "Blog", items: ["blog"] },
   { label: "Gallery", items: ["gallery"] },
   { label: "Inbox", items: ["inbox-contact"] },
@@ -283,7 +287,7 @@ function renderSymposia(key: "upcomingSymposia" | "pastSymposia" | "pastStudentS
     <div class="dash-list">${items}</div>`;
 }
 
-function membersCsvBar(kind: "permanent" | "executive" | "attendees" | "recognized"): string {
+function membersCsvBar(kind: "all" | "permanent" | "executive" | "attendees" | "recognized"): string {
   return `
     <div class="dash-csv-bar" data-csv-kind="${kind}">
       <button type="button" class="btn btn--ghost btn--sm" data-csv-export>Export CSV</button>
@@ -314,6 +318,25 @@ function renderPermanent(): string {
       <input type="number" id="total-members" value="${content.totalMembers}" />
     </div>
     <div class="dash-list">${items}</div>`;
+}
+
+function renderAllMembers(): string {
+  const items = content.allMembers
+    .map((item, i) =>
+      listRow(
+        item.name,
+        [item.registrationNo || item.membershipNo || "", item.affiliation || "", item.city || ""]
+          .filter(Boolean)
+          .join(" · ") || "Member",
+        i,
+        true,
+      ),
+    )
+    .join("");
+  return `
+    ${panelHead("All Members", "Full member directory. New rows get IPS-MEM-###### automatically. CSV import supported.", "+ Add member")}
+    ${membersCsvBar("all")}
+    <div class="dash-list">${items || `<p class="dash-empty">No members yet.</p>`}</div>`;
 }
 
 function renderExecutive(): string {
@@ -517,6 +540,7 @@ function renderPanel(): void {
     "events-past": () => renderSymposia("pastSymposia", "Past Symposia", "Events page — past tab."),
     "events-student": () => renderSymposia("pastStudentSymposia", "Past Student Symposia", "Events page — student tab."),
     "members-permanent": renderPermanent,
+    "members-all": renderAllMembers,
     "members-executive": renderExecutive,
     "members-attendees": renderAttendees,
     "members-recognized": renderRecognized,
@@ -636,6 +660,18 @@ function getModalFields(): FormField[] {
       { key: "name", label: "Name" },
       { key: "membershipNo", label: "Membership No.", type: "number" },
       { key: "isFounder", label: "Founder member (shows Founder badge)", type: "checkbox" },
+    ];
+  }
+  if (activeSection === "members-all") {
+    return [
+      { key: "name", label: "Name" },
+      {
+        key: "registrationNo",
+        label: "Registration No.",
+        hint: "Leave blank on new members — auto-assigned as IPS-MEM-######.",
+      },
+      { key: "affiliation", label: "Affiliation" },
+      { key: "city", label: "City" },
     ];
   }
   if (activeSection === "members-executive") {
@@ -794,6 +830,15 @@ function getModalData(index: number | "new"): Record<string, string> {
       isFounder: item.isFounder ? "true" : "false",
     };
   }
+  if (activeSection === "members-all") {
+    const item = content.allMembers[i];
+    return {
+      name: item.name,
+      registrationNo: item.registrationNo || item.membershipNo || "",
+      affiliation: item.affiliation ?? "",
+      city: item.city ?? "",
+    };
+  }
   if (activeSection === "members-executive") {
     const item = getExecutives()[i];
     return {
@@ -891,6 +936,7 @@ function modalTitle(index: number | "new"): string {
       "events-past": "Add symposium",
       "events-student": "Add symposium",
       "members-permanent": "Add permanent member",
+      "members-all": "Add member",
       "members-executive": "Add executive",
       "members-attendees": "Add attendee",
       "members-recognized": "Add recognised person",
@@ -909,6 +955,7 @@ function modalTitle(index: number | "new"): string {
     "events-past": "Edit symposium",
     "events-student": "Edit symposium",
     "members-permanent": "Edit permanent member",
+    "members-all": "Edit member",
     "members-executive": "Edit executive",
     "members-attendees": "Edit attendee",
     "members-recognized": "Edit recognised person",
@@ -1210,6 +1257,24 @@ async function applyModalData(data: Record<string, string>): Promise<void> {
     isFounder: data.isFounder === "true",
   });
 
+  const saveSocietyMember = (): SocietyMember => {
+    const existing =
+      modalIndex === "new" ? null : content.allMembers[modalIndex as number];
+    const provided = (data.registrationNo ?? "").trim();
+    const registrationNo =
+      provided ||
+      existing?.registrationNo ||
+      existing?.membershipNo ||
+      allocateMemberNumber(content);
+    return {
+      name: data.name ?? "",
+      registrationNo,
+      membershipNo: registrationNo,
+      affiliation: (data.affiliation ?? "").trim() || undefined,
+      city: (data.city ?? "").trim() || undefined,
+    };
+  };
+
   const saveExecutive = (): TeamMember => ({
     name: data.name ?? "",
     role: data.role ?? "",
@@ -1269,6 +1334,13 @@ async function applyModalData(data: Record<string, string>): Promise<void> {
     const item = savePermanent();
     if (modalIndex === "new") content.permanentMembers.push(item);
     else content.permanentMembers[modalIndex as number] = item;
+    return;
+  }
+
+  if (activeSection === "members-all") {
+    const item = saveSocietyMember();
+    if (modalIndex === "new") content.allMembers.push(item);
+    else content.allMembers[modalIndex as number] = item;
     return;
   }
 
@@ -1346,6 +1418,21 @@ function moveItem<T>(arr: T[], index: number, dir: -1 | 1): void {
 }
 
 function exportMembersCsv(kind: string): void {
+  if (kind === "all") {
+    downloadTextFile(
+      "ips-all-members.csv",
+      toCsv(
+        ["name", "registrationNo", "affiliation", "city"],
+        content.allMembers.map((m) => [
+          m.name,
+          m.registrationNo || m.membershipNo || "",
+          m.affiliation ?? "",
+          m.city ?? "",
+        ]),
+      ),
+    );
+    return;
+  }
   if (kind === "permanent") {
     downloadTextFile(
       "ips-permanent-members.csv",
@@ -1403,6 +1490,11 @@ function exportMembersCsv(kind: string): void {
 
 function downloadMembersTemplate(kind: string): void {
   const templates: Record<string, { file: string; headers: string[]; sample: string[] }> = {
+    all: {
+      file: "ips-all-members-template.csv",
+      headers: ["name", "registrationNo", "affiliation", "city"],
+      sample: ["Dr. Example Name", "IPS-MEM-000101", "IISER Pune", "Pune"],
+    },
     permanent: {
       file: "ips-permanent-members-template.csv",
       headers: ["name", "membershipNo", "isFounder"],
@@ -1432,6 +1524,33 @@ function downloadMembersTemplate(kind: string): void {
 function importMembersCsv(kind: string, text: string): number {
   const { rows } = parseCsv(text);
   if (!rows.length) throw new Error("CSV has no data rows.");
+
+  if (kind === "all") {
+    const imported = rows
+      .map((r) => {
+        const registrationNo = String(
+          r.registrationNo || r.RegistrationNo || r.membershipNo || r.MembershipNo || r.membership_no || "",
+        ).trim();
+        return {
+          name: r.name || r.Name || "",
+          registrationNo: registrationNo || undefined,
+          membershipNo: registrationNo || undefined,
+          affiliation: (r.affiliation || r.Affiliation || "").trim() || undefined,
+          city: (r.city || r.City || "").trim() || undefined,
+        };
+      })
+      .filter((m) => m.name)
+      .map((m) => {
+        if (m.registrationNo) return m;
+        const registrationNo = allocateMemberNumber(content);
+        return { ...m, registrationNo, membershipNo: registrationNo };
+      });
+    if (!imported.length) {
+      throw new Error("No valid members found. Need columns: name, registrationNo, affiliation, city.");
+    }
+    content.allMembers = imported;
+    return imported.length;
+  }
 
   if (kind === "permanent") {
     const imported = rows
@@ -1578,6 +1697,7 @@ function bindPanelEvents(): void {
           "events-past": "pastSymposia",
           "events-student": "pastStudentSymposia",
           "members-permanent": "permanentMembers",
+          "members-all": "allMembers",
           "members-attendees": "symposiumAttendees",
           "members-recognized": "recognizedPeople",
           blog: "blogPosts",
@@ -1615,6 +1735,7 @@ function bindPanelEvents(): void {
         "events-past": () => content.pastSymposia.splice(index, 1),
         "events-student": () => content.pastStudentSymposia.splice(index, 1),
         "members-permanent": () => content.permanentMembers.splice(index, 1),
+        "members-all": () => content.allMembers.splice(index, 1),
         "members-executive": () => {
           const executives = getExecutives();
           executives.splice(index, 1);

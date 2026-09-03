@@ -173,6 +173,40 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["permanent_members"]["Row"]>;
       Relationships: [];
       };
+      society_members: {
+        Row: {
+          id: string;
+          name: string;
+          membership_no: string;
+          affiliation: string;
+          city: string;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["society_members"]["Row"]> & {
+          name: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["society_members"]["Row"]>;
+        Relationships: [];
+      };
+      ips2027_assets: {
+        Row: {
+          id: string;
+          title: string;
+          image_url: string;
+          storage_path: string | null;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["ips2027_assets"]["Row"]> & {
+          id: string;
+          image_url: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["ips2027_assets"]["Row"]>;
+        Relationships: [];
+      };
       symposium_attendees: {
         Row: {
           id: string;

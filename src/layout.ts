@@ -3,6 +3,8 @@ export type PageId =
   | "membership"
   | "members"
   | "events"
+  | "symposiums"
+  | "ips2027"
   | "registration"
   | "blog"
   | "gallery"
@@ -21,7 +23,8 @@ const navItems: { label: string; href: string; id: PageId }[] = [
   { label: "About", href: "/index.html#about", id: "home" },
   { label: "Membership", href: "/membership.html", id: "membership" },
   { label: "Members", href: "/members.html", id: "members" },
-  { label: "Events", href: "/events.html", id: "events" },
+  { label: "Symposiums", href: "/symposiums.html", id: "symposiums" },
+  { label: "IPS 2027", href: "/ips-2027.html", id: "ips2027" },
   { label: "Registration", href: "/registration.html", id: "registration" },
   { label: "Blog", href: "/blog.html", id: "blog" },
   { label: "Gallery", href: "/gallery.html", id: "gallery" },
@@ -34,13 +37,22 @@ function navLink(item: (typeof navItems)[0], active: PageId): string {
     (active === "home" && item.label === "Home") ||
     (active === "membership" && item.label === "Membership") ||
     (active === "members" && item.label === "Members") ||
-    (active === "events" && item.label === "Events") ||
+    (active === "symposiums" && item.label === "Symposiums") ||
+    (active === "events" && item.label === "Symposiums") ||
+    (active === "ips2027" && item.label === "IPS 2027") ||
     (active === "registration" && item.label === "Registration") ||
     (active === "blog" && item.label === "Blog") ||
     (active === "gallery" && item.label === "Gallery") ||
     (active === "faq" && item.label === "Faq") ||
     (active === "contact" && item.label === "Contact Us");
   const activeClass = isActive ? ' class="is-active"' : "";
+  const special = item.id === "ips2027" ? ' class="nav-ips2027"' : "";
+  if (isActive && item.id === "ips2027") {
+    return `<a href="${item.href}" class="nav-ips2027 is-active">${item.label}</a>`;
+  }
+  if (item.id === "ips2027") {
+    return `<a href="${item.href}"${special}>${item.label}</a>`;
+  }
   return `<a href="${item.href}"${activeClass}>${item.label}</a>`;
 }
 
@@ -121,7 +133,8 @@ export function renderFooter(): string {
           <h3>Important Links</h3>
           <ul>
             <li><a href="/index.html">Home</a></li>
-            <li><a href="/events.html">Upcoming Events</a></li>
+            <li><a href="/ips-2027.html">IPS 2027</a></li>
+            <li><a href="/symposiums.html">All Symposiums</a></li>
             <li><a href="/registration.html">Symposium Registration</a></li>
             <li><a href="/members.html">Members</a></li>
             <li><a href="/members.html?tab=permanent">Permanent Members</a></li>
@@ -136,10 +149,10 @@ export function renderFooter(): string {
         <div>
           <h3>Past Symposia</h3>
           <ul>
-            <li><a href="/events.html?tab=student">4th Student Indian Peptide Symposium</a></li>
-            <li><a href="/events.html?tab=past">10th Indian Peptide Symposium</a></li>
-            <li><a href="/events.html?tab=past">9th Indian Peptide Symposium</a></li>
-            <li><a href="/events.html?tab=past">8th Indian Peptide Symposium</a></li>
+            <li><a href="/symposiums.html#past">10th Indian Peptide Symposium</a></li>
+            <li><a href="/symposiums.html#past">9th Indian Peptide Symposium</a></li>
+            <li><a href="/symposiums.html#past">8th Indian Peptide Symposium</a></li>
+            <li><a href="/symposiums.html#student">4th Student Indian Peptide Symposium</a></li>
           </ul>
         </div>
         <div>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Symposiums | Indian Peptide Society</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta
+      name="description"
+      content="All Indian Peptide Society symposiums — upcoming, past, and student programmes."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div id="top-bar-mount"></div>
+    <div id="header-mount"></div>
+
+    <main>
+      <section class="page-hero">
+        <div class="container">
+          <h1 class="page-hero__title">Symposiums</h1>
+          <p class="page-hero__sub">All Indian Peptide Society gatherings</p>
+        </div>
+      </section>
+
+      <section class="section symposiums-page section--cream">
+        <div class="container">
+          <div class="symposiums-block" id="upcoming">
+            <div class="section-header section-header--left">
+              <p class="section-label">Upcoming</p>
+              <h2 class="heading-md">Upcoming Symposia</h2>
+              <div class="section-line section-line--left"></div>
+            </div>
+            <div id="symposiums-upcoming" class="events-grid"></div>
+          </div>
+
+          <div class="symposiums-block" id="past">
+            <div class="section-header section-header--left">
+              <p class="section-label">Archive</p>
+              <h2 class="heading-md">Past Symposia</h2>
+              <div class="section-line section-line--left"></div>
+            </div>
+            <div id="symposiums-past" class="events-grid"></div>
+          </div>
+
+          <div class="symposiums-block" id="student">
+            <div class="section-header section-header--left">
+              <p class="section-label">Students</p>
+              <h2 class="heading-md">Past Student Symposia</h2>
+              <div class="section-line section-line--left"></div>
+            </div>
+            <div id="symposiums-student" class="events-grid"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="footer-mount"></div>
+    <script type="module" src="/src/symposiums.ts"></script>
+  </body>
+</html>

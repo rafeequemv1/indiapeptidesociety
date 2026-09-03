@@ -111,6 +111,7 @@ export const defaultContent: SiteContent = {
     { name: "Bichismita Sahu", membershipNo: 426 },
     { name: "Bhalchandra Kulkarni", membershipNo: 425 },
   ],
+  allMembers: [],
   symposiumAttendees: [
     { name: "Ananya Sharma", affiliation: "IISER Pune", symposiumYear: 2025, symposiumTitle: "10th Indian Peptide Symposium" },
     { name: "Rohan Mehta", affiliation: "IIT Bombay", symposiumYear: 2025, symposiumTitle: "10th Indian Peptide Symposium" },
@@ -276,6 +277,10 @@ export const defaultContent: SiteContent = {
     },
   ],
   totalMembers: 352,
+  registrationCounters: {
+    member: 0,
+    symposium: {},
+  },
   faqItems: [
     { question: "What is Indian Peptide Society all about?", answer: "Indian Peptide Society was founded in 2006 under Societies Registration Act XXI of 1860 under Registrar of Societies Government of NCT of Delhi Registration No. S-59874. Objective of the society is to provide a platform & common forum to the scientists working on peptides in India and abroad to network, communicate and share knowledge and resources." },
     { question: "Who can become the member of Indian Peptide Society?", answer: "Any one who is preferably of Indian origin and working in the field of peptide, its application and related area of research in academic or industry." },
@@ -287,4 +292,16 @@ export const defaultContent: SiteContent = {
     { question: "When is the symposium organized by Indian Peptide Society?", answer: "Indian Peptide Society organise 02 days biennial peptide symposium every alternate year. Last symposium held in 2019 and next symposium has been announced for 2021. Indian Peptide Society also organize student-Indian Peptide Symposium (sIPS) in different regions of country to encourage student participation." },
   ],
 };
+
+defaultContent.allMembers = defaultContent.permanentMembers.map((m) => ({
+  name: m.name,
+  membershipNo: String(m.membershipNo),
+  registrationNo: `IPS-MEM-${String(m.membershipNo).padStart(6, "0")}`,
+  affiliation: "",
+  city: "",
+}));
+defaultContent.registrationCounters.member = Math.max(
+  ...defaultContent.permanentMembers.map((m) => m.membershipNo),
+  0,
+);
 

@@ -5,6 +5,7 @@ import {
   type PermanentMember,
   type TeamMember,
   type RecognizedPerson,
+  type SocietyMember,
 } from "./data/store";
 import { injectLayout } from "./layout";
 import { initMobileMenu, initNewsletterForm } from "./shared";
@@ -13,60 +14,59 @@ type TabId = "all" | "permanent" | "executive" | "recognized";
 
 const VALID_TABS: TabId[] = ["all", "permanent", "executive", "recognized"];
 
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
+function renderListingCard(
+  name: string,
+  lines: string[],
+  badge?: string,
+  badgeClass = "people-card__badge",
+): string {
+  return `
+    <article class="people-card people-card--listing">
+      <div class="people-card__body">
+        ${badge ? `<span class="${badgeClass}">${escapeHtml(badge)}</span>` : ""}
+        <h3 class="people-card__name">${escapeHtml(name)}</h3>
+        ${lines
+          .filter(Boolean)
+          .map((line) => `<p class="people-card__meta">${escapeHtml(line)}</p>`)
+          .join("")}
+      </div>
+    </article>`;
+}
+
+function renderAllMemberCard(member: SocietyMember): string {
+  const lines = [
+    member.registrationNo || member.membershipNo
+      ? `Reg. No. ${member.registrationNo || member.membershipNo}`
+      : "",
+    member.affiliation || "",
+    member.city || "",
+  ];
+  return renderListingCard(member.name, lines, "Member");
 }
 
 function renderPermanentCard(member: PermanentMember): string {
-  const badge = member.isFounder ? "Founder" : "Member";
+  const badge = member.isFounder ? "Founder" : "Permanent";
   const badgeClass = member.isFounder
     ? "people-card__badge people-card__badge--founder"
     : "people-card__badge";
-  const cardClass = member.isFounder ? "people-card people-card--founder" : "people-card";
-  return `
-    <article class="${cardClass}">
-      <div class="people-card__avatar" aria-hidden="true">${escapeHtml(getInitials(member.name))}</div>
-      <div class="people-card__body">
-        <span class="${badgeClass}">${badge}</span>
-        <h3 class="people-card__name">${escapeHtml(member.name)}</h3>
-        <p class="people-card__meta">Membership No. ${member.membershipNo}</p>
-      </div>
-    </article>`;
+  return renderListingCard(member.name, [`Membership No. ${member.membershipNo}`], badge, badgeClass);
 }
 
 function renderExecutiveCard(member: TeamMember): string {
-  const photo = member.image
-    ? `<img class="people-card__photo" src="${escapeHtml(member.image)}" alt="" width="72" height="72" />`
-    : `<div class="people-card__avatar" aria-hidden="true">${escapeHtml(getInitials(member.name))}</div>`;
-  return `
-    <article class="people-card people-card--executive">
-      ${photo}
-      <div class="people-card__body">
-        <span class="people-card__badge">Executive</span>
-        <h3 class="people-card__name">${escapeHtml(member.name)}</h3>
-        ${member.role ? `<p class="people-card__role">${escapeHtml(member.role)}</p>` : ""}
-        <p class="people-card__title">${escapeHtml(member.affiliation)}</p>
-      </div>
-    </article>`;
+  return renderListingCard(
+    member.name,
+    [member.role || "", member.affiliation || ""],
+    "Executive",
+  );
 }
 
 function renderRecognizedCard(person: RecognizedPerson): string {
-  return `
-    <article class="people-card people-card--recognized">
-      <div class="people-card__avatar" aria-hidden="true">${escapeHtml(getInitials(person.name))}</div>
-      <div class="people-card__body">
-        <span class="people-card__badge people-card__badge--honor">Recognised</span>
-        <h3 class="people-card__name">${escapeHtml(person.name)}</h3>
-        <p class="people-card__role">${escapeHtml(person.honor)}</p>
-        ${person.affiliation ? `<p class="people-card__title">${escapeHtml(person.affiliation)}</p>` : ""}
-        ${person.year ? `<p class="people-card__meta">${escapeHtml(person.year)}</p>` : ""}
-      </div>
-    </article>`;
+  return renderListingCard(
+    person.name,
+    [person.honor, person.affiliation || "", person.year || ""],
+    "Recognised",
+    "people-card__badge people-card__badge--honor",
+  );
 }
 
 function initMembersPage(): void {
@@ -78,15 +78,18 @@ function initMembersPage(): void {
     executive: document.getElementById("panel-executive"),
     recognized: document.getElementById("panel-recognized"),
   };
-  const allStack = document.getElementById("all-stack");
+  const allGrid = document.getElementById("all-members-grid");
   const permanentGrid = document.getElementById("permanent-grid");
   const executiveGrid = document.getElementById("executive-grid");
   const recognizedGrid = document.getElementById("recognized-grid");
   const searchInput = document.getElementById("member-search") as HTMLInputElement | null;
+  const allSearchInput = document.getElementById("all-member-search") as HTMLInputElement | null;
   const resultsText = document.getElementById("results-text");
+  const allResultsText = document.getElementById("all-results-text");
   const nextBtn = document.getElementById("next-page") as HTMLButtonElement | null;
+  const allNextBtn = document.getElementById("all-next-page") as HTMLButtonElement | null;
 
-  if (!allStack || !permanentGrid || !executiveGrid || !recognizedGrid) return;
+  if (!allGrid || !permanentGrid || !executiveGrid || !recognizedGrid) return;
 
   const executives = data.team.filter((m) => m.section === "executive");
   executiveGrid.innerHTML = executives.map(renderExecutiveCard).join("");
@@ -100,76 +103,49 @@ function initMembersPage(): void {
   setCount("count-permanent", data.permanentMembers.length);
   setCount("count-executive", executives.length);
   setCount("count-recognized", data.recognizedPeople.length);
-  setCount("count-all", data.permanentMembers.length + executives.length + data.recognizedPeople.length);
+  setCount("count-all", data.allMembers.length);
 
-  function renderAll(): void {
-    const previewPermanent = [...data.permanentMembers]
-      .sort((a, b) => Number(Boolean(b.isFounder)) - Number(Boolean(a.isFounder)))
-      .slice(0, 6);
+  let permanentPage = 0;
+  let allPage = 0;
 
-    allStack!.innerHTML = `
-      <section class="members-preview">
-        <div class="members-preview__head">
-          <h3>Permanent Members</h3>
-          <button type="button" class="members-preview__link" data-goto="permanent">View all →</button>
-        </div>
-        <div class="people-grid">${previewPermanent.map(renderPermanentCard).join("")}</div>
-      </section>
-      <section class="members-preview">
-        <div class="members-preview__head">
-          <h3>Executive Members</h3>
-          <button type="button" class="members-preview__link" data-goto="executive">View all →</button>
-        </div>
-        <div class="people-grid people-grid--executive">${executives.map(renderExecutiveCard).join("")}</div>
-      </section>
-      <section class="members-preview">
-        <div class="members-preview__head">
-          <h3>Recognised People</h3>
-          <button type="button" class="members-preview__link" data-goto="recognized">View all →</button>
-        </div>
-        <div class="people-grid people-grid--recognized">${data.recognizedPeople.map(renderRecognizedCard).join("")}</div>
-      </section>`;
+  function renderPermanent(reset = false): void {
+    if (reset) permanentPage = 0;
+    const q = (searchInput?.value ?? "").trim().toLowerCase();
+    const filtered = data.permanentMembers
+      .filter((m) => !q || m.name.toLowerCase().includes(q) || String(m.membershipNo).includes(q))
+      .sort((a, b) => Number(Boolean(b.isFounder)) - Number(Boolean(a.isFounder)) || a.membershipNo - b.membershipNo);
 
-    allStack!.querySelectorAll<HTMLButtonElement>("[data-goto]").forEach((btn) => {
-      btn.addEventListener("click", () => setTab(btn.dataset.goto as TabId));
-    });
-  }
-
-  let currentPage = 1;
-  let searchQuery = "";
-
-  function getFiltered(): PermanentMember[] {
-    const q = searchQuery.trim().toLowerCase();
-    const sorted = [...data.permanentMembers].sort((a, b) => {
-      if (a.isFounder && !b.isFounder) return -1;
-      if (!a.isFounder && b.isFounder) return 1;
-      return a.name.localeCompare(b.name);
-    });
-    if (!q) return sorted;
-    return sorted.filter(
-      (m) => m.name.toLowerCase().includes(q) || String(m.membershipNo).includes(q),
-    );
-  }
-
-  function renderPermanent(): void {
-    const filtered = getFiltered();
-    const total = searchQuery ? filtered.length : Math.max(data.totalMembers, filtered.length);
-    const start = (currentPage - 1) * PAGE_SIZE;
-    const pageItems = filtered.slice(start, start + PAGE_SIZE);
-
-    permanentGrid!.innerHTML = pageItems.map(renderPermanentCard).join("");
-
+    const end = (permanentPage + 1) * PAGE_SIZE;
+    const slice = filtered.slice(0, end);
+    permanentGrid!.innerHTML = slice.map(renderPermanentCard).join("");
     if (resultsText) {
-      const showingEnd = start + pageItems.length;
-      const showingStart = pageItems.length ? start + 1 : 0;
-      resultsText.textContent = `Showing ${showingStart} to ${showingEnd} of ${total} results`;
+      resultsText.textContent = `Showing ${slice.length} of ${Math.max(data.totalMembers, filtered.length)}`;
     }
+    if (nextBtn) nextBtn.hidden = end >= filtered.length;
+  }
 
-    if (nextBtn) {
-      const moreInList = start + PAGE_SIZE < filtered.length;
-      nextBtn.disabled = !moreInList;
-      nextBtn.hidden = !moreInList && currentPage === 1;
+  function renderAllMembers(reset = false): void {
+    if (reset) allPage = 0;
+    const q = (allSearchInput?.value ?? "").trim().toLowerCase();
+    const filtered = data.allMembers.filter((m) => {
+      if (!q) return true;
+      return (
+        m.name.toLowerCase().includes(q) ||
+        (m.registrationNo || "").toLowerCase().includes(q) ||
+        (m.membershipNo || "").toLowerCase().includes(q) ||
+        (m.affiliation || "").toLowerCase().includes(q) ||
+        (m.city || "").toLowerCase().includes(q)
+      );
+    });
+    const end = (allPage + 1) * PAGE_SIZE;
+    const slice = filtered.slice(0, end);
+    allGrid!.innerHTML =
+      slice.map(renderAllMemberCard).join("") ||
+      `<p class="members-empty">No members in the directory yet. Add them from the dashboard.</p>`;
+    if (allResultsText) {
+      allResultsText.textContent = `Showing ${slice.length} of ${filtered.length}`;
     }
+    if (allNextBtn) allNextBtn.hidden = end >= filtered.length;
   }
 
   function setTab(tab: TabId): void {
@@ -179,42 +155,40 @@ function initMembersPage(): void {
       btn.setAttribute("aria-selected", String(isActive));
     });
     (Object.keys(panels) as TabId[]).forEach((key) => {
-      const panel = panels[key];
-      if (panel) panel.hidden = key !== tab;
+      if (panels[key]) panels[key]!.hidden = key !== tab;
     });
     const url = new URL(window.location.href);
     if (tab === "all") url.searchParams.delete("tab");
     else url.searchParams.set("tab", tab);
-    window.history.replaceState({}, "", url.toString());
+    window.history.replaceState({}, "", url);
   }
 
   navItems.forEach((btn) => {
     btn.addEventListener("click", () => setTab(btn.dataset.tab as TabId));
   });
 
+  searchInput?.addEventListener("input", () => renderPermanent(true));
+  nextBtn?.addEventListener("click", () => {
+    permanentPage += 1;
+    renderPermanent();
+  });
+
+  allSearchInput?.addEventListener("input", () => renderAllMembers(true));
+  allNextBtn?.addEventListener("click", () => {
+    allPage += 1;
+    renderAllMembers();
+  });
+
+  renderPermanent(true);
+  renderAllMembers(true);
+
   const params = new URLSearchParams(window.location.search);
-  const paramTab = params.get("tab");
-  if (paramTab === "founders" || paramTab === "directory" || paramTab === "attendees") {
-    setTab("permanent");
-  } else if (paramTab && VALID_TABS.includes(paramTab as TabId)) {
-    setTab(paramTab as TabId);
+  const tabParam = params.get("tab");
+  if (tabParam && VALID_TABS.includes(tabParam as TabId) && tabParam !== "all") {
+    setTab(tabParam as TabId);
   } else {
     setTab("all");
   }
-
-  searchInput?.addEventListener("input", () => {
-    searchQuery = searchInput.value;
-    currentPage = 1;
-    renderPermanent();
-  });
-
-  nextBtn?.addEventListener("click", () => {
-    currentPage += 1;
-    renderPermanent();
-  });
-
-  renderPermanent();
-  renderAll();
 }
 
 injectLayout("members");
