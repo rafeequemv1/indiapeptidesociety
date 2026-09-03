@@ -31,6 +31,7 @@ import type { PermanentMember, SiteContent, SocietyMember, TeamMember } from "..
 import { defaultContent } from "../domain/defaults";
 import {
   formatMemberNo,
+  normalizeMemberDisplayNo,
   normalizeRegistrationCounters,
   parseMemberSeq,
 } from "../lib/registration-numbers";
@@ -85,14 +86,15 @@ function normalizeAllMembers(
   if (Array.isArray(parsed.allMembers) && parsed.allMembers.length) {
     return parsed.allMembers.map((m) => {
       const legacy = m.membershipNo ? String(m.membershipNo) : "";
-      const registrationNo =
+      const registrationNo = normalizeMemberDisplayNo(
         m.registrationNo?.trim() ||
-        (parseMemberSeq(legacy) ? formatMemberNo(parseMemberSeq(legacy)) : legacy) ||
-        "";
+          (parseMemberSeq(legacy) ? formatMemberNo(parseMemberSeq(legacy)) : legacy) ||
+          "",
+      );
       return {
         name: m.name ?? "",
         registrationNo,
-        membershipNo: legacy || registrationNo,
+        membershipNo: normalizeMemberDisplayNo(legacy || registrationNo),
         affiliation: m.affiliation ?? "",
         city: m.city ?? "",
       };
@@ -157,6 +159,9 @@ function normalizeContent(parsed: Partial<SiteContent>): SiteContent {
       ...parsed.symposiumRegistration,
     },
     contactMessages: Array.isArray(parsed.contactMessages) ? parsed.contactMessages : [],
+    membershipApplications: Array.isArray(parsed.membershipApplications)
+      ? parsed.membershipApplications
+      : [],
     symposiumRegistrations: normalizeRegistrations(parsed.symposiumRegistrations),
     registrationCounters: normalizeRegistrationCounters(parsed.registrationCounters, {
       allMembers,

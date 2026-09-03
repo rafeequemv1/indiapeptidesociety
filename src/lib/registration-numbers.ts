@@ -2,7 +2,7 @@
  * Scalable IPS registration numbers for society members and symposium entries.
  *
  * Formats:
- *   Members:    IPS-MEM-000001
+ *   Members:    IPS-000001
  *   Symposium:  IPS-SYM-2027-000001
  *
  * Counters live on SiteContent.registrationCounters and advance on allocate.
@@ -13,7 +13,7 @@ import type { SiteContent } from "../domain/types";
 const PAD = 6;
 
 export interface RegistrationCounters {
-  /** Last issued member sequence (IPS-MEM-######). */
+  /** Last issued member sequence (IPS-######). */
   member: number;
   /** Last issued symposium sequence per event year. */
   symposium: Record<string, number>;
@@ -56,7 +56,14 @@ export function normalizeRegistrationCounters(
 }
 
 export function formatMemberNo(seq: number): string {
-  return `IPS-MEM-${String(seq).padStart(PAD, "0")}`;
+  return `IPS-${String(seq).padStart(PAD, "0")}`;
+}
+
+/** Normalize legacy IPS-MEM- numbers to IPS- for display/storage. */
+export function normalizeMemberDisplayNo(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return trimmed.replace(/^IPS-MEM-/i, "IPS-");
 }
 
 export function formatSymposiumNo(year: number | string, seq: number): string {
@@ -64,9 +71,12 @@ export function formatSymposiumNo(year: number | string, seq: number): string {
 }
 
 export function parseMemberSeq(value: string): number {
-  const m = value.trim().match(/^IPS-MEM-(\d+)$/i);
+  const trimmed = value.trim();
+  let m = trimmed.match(/^IPS-MEM-(\d+)$/i);
   if (m) return Number(m[1]) || 0;
-  const n = Number(value);
+  m = trimmed.match(/^IPS-(\d+)$/i);
+  if (m) return Number(m[1]) || 0;
+  const n = Number(trimmed);
   return Number.isFinite(n) ? n : 0;
 }
 

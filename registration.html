@@ -78,6 +78,31 @@
                     <option value="Other">Other</option>
                   </select>
                 </div>
+                <div class="symp-reg__fee-summary" id="symp-reg-fee-summary" hidden>
+                  <div class="symp-reg__fee-row">
+                    <span>Registration fee</span>
+                    <strong id="symp-reg-base-fee">—</strong>
+                  </div>
+                  <div class="symp-reg__fee-row symp-reg__fee-row--discount" id="symp-reg-discount-row" hidden>
+                    <span>IPS member discount</span>
+                    <strong id="symp-reg-discount">− ₹1,000</strong>
+                  </div>
+                  <div class="symp-reg__fee-row symp-reg__fee-row--total">
+                    <span>Amount due</span>
+                    <strong id="symp-reg-total-fee">—</strong>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="checkbox-label" for="reg-is-member">
+                    <input id="reg-is-member" name="isIpsMember" type="checkbox" />
+                    <span>I am an IPS member — ₹1,000 discount on registration fee</span>
+                  </label>
+                </div>
+                <div class="form-group" id="reg-membership-no-wrap" hidden>
+                  <label for="reg-membership-no">IPS membership number</label>
+                  <input id="reg-membership-no" name="ipsMembershipNo" type="text" placeholder="e.g. IPS-000470" />
+                  <p class="form-hint">Enter your IPS membership number to claim the discount.</p>
+                </div>
                 <div class="form-group">
                   <label for="reg-abstract-title">Abstract title <span class="form-optional">(optional)</span></label>
                   <input id="reg-abstract-title" name="abstractTitle" type="text" placeholder="Title of your abstract" />

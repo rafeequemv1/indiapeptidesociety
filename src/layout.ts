@@ -1,3 +1,5 @@
+import { initAuthUi } from "./auth/ui";
+
 export type PageId =
   | "home"
   | "membership"
@@ -87,13 +89,13 @@ function renderFooterUtility(opts?: { showDashboard?: boolean }): string {
           </a>
           <div class="footer__utility-actions">
             ${dashboardLink}
-            <a href="/membership.html#signin" class="footer__signin" id="footer-signin">Sign In</a>
+            <button type="button" class="footer__signin" id="footer-signin">Sign In</button>
           </div>
         </div>
       </div>`;
 }
 
-/** Site title strip — logo + name, centered. */
+/** Site title strip — logo + name centered, profile/sign-in on the right. */
 export function renderTopBar(_opts?: { showDashboard?: boolean }): string {
   return `
     <div class="top-bar">
@@ -102,6 +104,9 @@ export function renderTopBar(_opts?: { showDashboard?: boolean }): string {
           <img src="/images/ips-logo.png" alt="Indian Peptide Society" class="top-bar__logo" width="220" height="48" />
           <span class="top-bar__title">Indian Peptide Society</span>
         </a>
+        <button type="button" class="top-bar__profile" id="top-bar-auth-btn" aria-label="Account">
+          Sign In
+        </button>
       </div>
     </div>`;
 }
@@ -208,5 +213,7 @@ export function injectLayout(active: PageId): void {
   if (topBar) topBar.outerHTML = renderTopBar();
   if (header) header.outerHTML = renderHeader(active);
   if (footer) footer.outerHTML = renderFooter({ showDashboard: false });
+
+  initAuthUi();
   void refreshFooterAuth();
 }

@@ -78,7 +78,7 @@ export interface PermanentMember {
 /** Full society member directory (admin-managed “All Members” list). */
 export interface SocietyMember {
   name: string;
-  /** Canonical number, e.g. IPS-MEM-000470 */
+  /** Canonical number, e.g. IPS-000470 */
   registrationNo?: string;
   membershipNo?: string;
   affiliation?: string;
@@ -140,6 +140,10 @@ export interface SymposiumRegistrationConfig {
   dates: string;
   venue: string;
   feeNote: string;
+  /** Category fees in INR for fee summary and member discount. */
+  fees?: Partial<Record<string, number>>;
+  /** Discount in INR for IPS members on symposium registration. */
+  memberDiscount?: number;
   razorpayUrl: string;
   ctaLabel: string;
 }
@@ -158,6 +162,12 @@ export interface SymposiumRegistration {
   razorpayPaymentId?: string;
   amountLabel?: string;
   receiptNo?: string;
+  /** IPS member discount applied */
+  isIpsMember?: boolean;
+  ipsMembershipNo?: string;
+  baseFee?: number;
+  memberDiscount?: number;
+  amountDue?: number;
   /** Optional symposium abstract */
   abstractTitle?: string;
   abstractFileName?: string;
@@ -168,6 +178,20 @@ export interface SymposiumRegistration {
   abstractStoragePath?: string;
   abstractFileSize?: number;
   hasAbstract?: boolean;
+}
+
+export interface MembershipApplication {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  affiliation: string;
+  city?: string;
+  category: string;
+  submittedAt: string;
+  paymentStatus?: PaymentStatus;
+  amountLabel?: string;
+  amountDue?: number;
 }
 
 /** Aggregate used by the current UI (localStorage today, Supabase soon). */
@@ -195,10 +219,11 @@ export interface SiteContent {
   galleryImages: GalleryImage[];
   symposiumRegistration: SymposiumRegistrationConfig;
   contactMessages: ContactMessage[];
+  membershipApplications: MembershipApplication[];
   symposiumRegistrations: SymposiumRegistration[];
   totalMembers: number;
   faqItems: FaqItem[];
-  /** Scalable counters for IPS-MEM- / IPS-SYM-YYYY- numbers */
+  /** Scalable counters for IPS- / IPS-SYM-YYYY- numbers */
   registrationCounters: {
     member: number;
     symposium: Record<string, number>;

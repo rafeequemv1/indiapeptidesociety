@@ -336,7 +336,7 @@ function renderAllMembers(): string {
     )
     .join("");
   return `
-    ${panelHead("All Members", "Full member directory. New rows get IPS-MEM-###### automatically. CSV import supported.", "+ Add member")}
+    ${panelHead("All Members", "Full member directory. New rows get IPS-###### automatically. CSV import supported.", "+ Add member")}
     ${membersCsvBar("all")}
     <div class="dash-list">${items || `<p class="dash-empty">No members yet.</p>`}</div>`;
 }
@@ -697,7 +697,7 @@ function getModalFields(): FormField[] {
       {
         key: "registrationNo",
         label: "Registration No.",
-        hint: "Leave blank on new members — auto-assigned as IPS-MEM-######.",
+        hint: "Leave blank on new members — auto-assigned as IPS-######.",
       },
       { key: "affiliation", label: "Affiliation" },
       { key: "city", label: "City" },
@@ -1578,7 +1578,7 @@ function downloadMembersTemplate(kind: string): void {
     all: {
       file: "ips-all-members-template.csv",
       headers: ["name", "registrationNo", "affiliation", "city"],
-      sample: ["Dr. Example Name", "IPS-MEM-000101", "IISER Pune", "Pune"],
+      sample: ["Dr. Example Name", "IPS-000101", "IISER Pune", "Pune"],
     },
     permanent: {
       file: "ips-permanent-members-template.csv",

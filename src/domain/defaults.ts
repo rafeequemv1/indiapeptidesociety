@@ -209,11 +209,19 @@ export const defaultContent: SiteContent = {
     subtitle: "Register for the upcoming Indian Peptide Symposium. Payment via Razorpay will be available shortly.",
     dates: "February 25–27, 2027",
     venue: "IIT Gandhinagar, Gandhinagar, Gujarat",
-    feeNote: "Registration fee details will be confirmed with the Razorpay payment link.",
+    feeNote: "Fees vary by category. IPS members receive ₹1,000 off the registration fee.",
+    fees: {
+      Student: 3500,
+      Academia: 5500,
+      Industry: 8500,
+      Other: 5500,
+    },
+    memberDiscount: 1000,
     razorpayUrl: "",
-    ctaLabel: "Register",
+    ctaLabel: "Register & Pay",
   },
   contactMessages: [],
+  membershipApplications: [],
   symposiumRegistrations: [
     {
       id: "demo-reg-abstract-1",
@@ -305,7 +313,7 @@ export const defaultContent: SiteContent = {
 defaultContent.allMembers = defaultContent.permanentMembers.map((m) => ({
   name: m.name,
   membershipNo: String(m.membershipNo),
-  registrationNo: `IPS-MEM-${String(m.membershipNo).padStart(6, "0")}`,
+  registrationNo: `IPS-${String(m.membershipNo).padStart(6, "0")}`,
   affiliation: "",
   city: "",
 }));

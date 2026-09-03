@@ -32,7 +32,10 @@ export function buildReceiptHtml(data: ReceiptData): string {
   const statusLabel =
     status === "paid" ? "PAID" : status === "failed" ? "FAILED" : "PAYMENT PENDING";
   const receiptNo = buildReceiptNumber(r);
-  const amount = r.amountLabel || "As per symposium fee schedule";
+  const amount =
+    r.amountDue !== undefined
+      ? `₹${r.amountDue.toLocaleString("en-IN")}${r.amountLabel ? ` (${escapeHtml(r.amountLabel.split(" — ")[0])})` : ""}`
+      : r.amountLabel || "As per symposium fee schedule";
   const paymentId = r.razorpayPaymentId || "— (will appear after Razorpay payment)";
 
   return `<!DOCTYPE html>
@@ -68,6 +71,21 @@ export function buildReceiptHtml(data: ReceiptData): string {
       <tr><th>Phone</th><td>${escapeHtml(r.phone)}</td></tr>
       <tr><th>Affiliation</th><td>${escapeHtml(r.affiliation)}</td></tr>
       <tr><th>Category</th><td>${escapeHtml(r.category)}</td></tr>
+      ${
+        r.isIpsMember
+          ? `<tr><th>IPS member</th><td>Yes · ${escapeHtml(r.ipsMembershipNo || "—")}</td></tr>`
+          : ""
+      }
+      ${
+        r.baseFee !== undefined
+          ? `<tr><th>Base fee</th><td>₹${r.baseFee.toLocaleString("en-IN")}</td></tr>`
+          : ""
+      }
+      ${
+        r.memberDiscount
+          ? `<tr><th>Member discount</th><td>− ₹${r.memberDiscount.toLocaleString("en-IN")}</td></tr>`
+          : ""
+      }
       <tr><th>Event dates</th><td>${escapeHtml(event.dates)}</td></tr>
       <tr><th>Venue</th><td>${escapeHtml(event.venue)}</td></tr>
       <tr><th>Amount</th><td>${escapeHtml(amount)}</td></tr>

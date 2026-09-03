@@ -8,8 +8,8 @@ export function authReady(): boolean {
 }
 
 /** Redirect target after user clicks the reset email link. */
-export function passwordResetRedirectUrl(page: "membership" | "dashboard" = "membership"): string {
-  const path = page === "dashboard" ? "/dashboard.html" : "/membership.html";
+export function passwordResetRedirectUrl(page: "home" | "dashboard" = "home"): string {
+  const path = page === "dashboard" ? "/dashboard.html" : "/index.html";
   return `${window.location.origin}${path}?reset=1`;
 }
 

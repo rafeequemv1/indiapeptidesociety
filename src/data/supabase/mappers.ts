@@ -232,6 +232,7 @@ export function emptySiteContent(): SiteContent {
       ctaLabel: "Register & Pay",
     },
     contactMessages: [],
+    membershipApplications: [],
     symposiumRegistrations: [],
     totalMembers: 0,
     faqItems: [],

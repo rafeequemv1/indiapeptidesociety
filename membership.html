@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sign In | Indian Peptide Society</title>
+    <title>Membership | Indian Peptide Society</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" type="image/png" href="/favicon.png" />
-    <meta name="description" content="Sign in, sign up, or reset your password for the Indian Peptide Society." />
+    <meta name="description" content="How to become a member of the Indian Peptide Society — categories, benefits, and application steps." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -19,102 +19,146 @@
     <main>
       <section class="page-hero page-hero--membership">
         <div class="container">
-          <h1 class="page-hero__title" id="auth-hero-title">Sign In</h1>
-          <p class="page-hero__sub" id="auth-hero-sub">Indian Peptide Society Membership</p>
+          <h1 class="page-hero__title">Membership</h1>
+          <p class="page-hero__sub">Join the Indian Peptide Society community</p>
         </div>
       </section>
 
       <section class="section membership-page">
-        <div class="container">
-          <div id="auth-signed-in" class="auth-panel" hidden>
-            <div class="auth-panel__card">
-              <h2 class="auth-panel__title">You are signed in</h2>
-              <p class="auth-panel__lead">Signed in as <strong id="auth-user-email"></strong></p>
-              <div class="auth-panel__actions">
-                <a href="/dashboard.html" class="btn btn--primary" id="auth-go-dashboard">Open dashboard</a>
-                <a href="/index.html" class="btn btn--outline">Go to home</a>
-                <button type="button" class="btn btn--ghost" id="auth-signout">Sign out</button>
+        <div class="container membership-page__grid">
+          <article class="membership-card membership-card--form">
+            <div class="membership-card__head membership-card__head--navy">
+              <h2>Apply for membership</h2>
+              <p>Submit your application below — Razorpay payment will be connected shortly</p>
+            </div>
+            <div class="membership-card__body">
+              <form id="membership-form" class="membership-form contact-form contact-form--plain">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="mem-name">Full name</label>
+                    <input id="mem-name" name="name" type="text" required autocomplete="name" />
+                  </div>
+                  <div class="form-group">
+                    <label for="mem-email">Email</label>
+                    <input id="mem-email" name="email" type="email" required autocomplete="email" />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="mem-phone">Phone</label>
+                    <input id="mem-phone" name="phone" type="tel" required autocomplete="tel" />
+                  </div>
+                  <div class="form-group">
+                    <label for="mem-city">City</label>
+                    <input id="mem-city" name="city" type="text" autocomplete="address-level2" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="mem-affiliation">Affiliation / Institution</label>
+                  <input id="mem-affiliation" name="affiliation" type="text" required />
+                </div>
+                <div class="form-group">
+                  <label for="mem-category">Membership category</label>
+                  <select id="mem-category" name="category" required>
+                    <option value="">Select category</option>
+                    <option value="Student">Student membership (₹1,000 · 5 years)</option>
+                    <option value="Life Academia">Life membership — Academia</option>
+                    <option value="Life Corporate">Life membership — Corporate</option>
+                  </select>
+                </div>
+                <div class="membership-fee-summary" id="mem-fee-summary" hidden>
+                  <p><span>Application fee</span> <strong id="mem-fee-amount">—</strong></p>
+                  <p class="membership-fee-summary__note">Payment via Razorpay will open here once configured.</p>
+                </div>
+                <button type="submit" class="btn btn--primary btn--full" id="mem-submit">Submit application &amp; Pay</button>
+                <p class="symp-reg__hint">Your application is saved and will appear in the admin dashboard. Online payment through Razorpay is coming soon.</p>
+              </form>
+              <div id="membership-success" class="contact-success" hidden>
+                <p class="contact-success__title">Application received</p>
+                <p id="membership-success-msg">Thank you. We have recorded your membership application.</p>
+                <p class="symp-reg__hint">Razorpay payment will be enabled shortly. For urgent enquiries, email indianpeptidesociety@gmail.com.</p>
               </div>
             </div>
-          </div>
+          </article>
 
-          <div id="auth-set-password" class="auth-panel" hidden>
-            <div class="auth-panel__card">
-              <h2 class="auth-panel__title">Set a new password</h2>
-              <p class="auth-panel__lead">You opened the reset link from your email. Choose a new password.</p>
-              <form id="set-password-form" class="contact-form contact-form--plain">
-                <div class="form-group">
-                  <label for="set-password">New password</label>
-                  <input id="set-password" name="password" type="password" required minlength="8" autocomplete="new-password" />
-                </div>
-                <div class="form-group">
-                  <label for="set-password-confirm">Confirm password</label>
-                  <input id="set-password-confirm" name="confirm" type="password" required minlength="8" autocomplete="new-password" />
-                </div>
-                <p class="auth-msg auth-msg--error" id="set-password-error" role="alert" hidden></p>
-                <button type="submit" class="btn btn--primary btn--full">Save password</button>
-              </form>
-              <p class="auth-panel__links">
-                <button type="button" class="auth-text-link" data-mode="signin">Cancel and sign in</button>
+          <article class="membership-card">
+            <div class="membership-card__head membership-card__head--navy">
+              <h2>How to become a member</h2>
+              <p>A simple path to join IPS and stay connected with peptide science in India</p>
+            </div>
+            <div class="membership-card__body">
+              <ol class="membership-steps">
+                <li>
+                  <strong>Check eligibility</strong>
+                  <p>Membership is open to scientists, students, and professionals working in peptides, their applications, and related areas of research — in academia or industry. Preference is given to those of Indian origin, including researchers abroad.</p>
+                </li>
+                <li>
+                  <strong>Choose your membership category</strong>
+                  <p>Select the category that matches your status — student, life member (academia), or life member (corporate). See the categories below for validity and fees.</p>
+                </li>
+                <li>
+                  <strong>Complete the application</strong>
+                  <p>Fill in the membership application form with your name, affiliation, contact details, and category. Payment can be made in INR or USD as applicable.</p>
+                </li>
+                <li>
+                  <strong>Receive your IPS membership number</strong>
+                  <p>Once approved, you are assigned a unique IPS membership number (e.g. IPS-000470) and added to the member directory.</p>
+                </li>
+                <li>
+                  <strong>Stay connected</strong>
+                  <p>Members receive updates on symposia, webinars, newsletters, and society activities. Life members enjoy additional privileges such as access to proceedings and society documents.</p>
+                </li>
+              </ol>
+              <p class="membership-contact">
+                For membership enquiries and application assistance, email
+                <a href="mailto:indianpeptidesociety@gmail.com">indianpeptidesociety@gmail.com</a>.
               </p>
             </div>
-          </div>
+          </article>
 
-          <div id="auth-forms" class="auth-panel">
-            <div class="auth-panel__card" id="signin">
-              <div class="auth-mode-tabs" role="tablist" aria-label="Account">
-                <button type="button" class="auth-mode-tabs__btn is-active" data-mode="signin" role="tab" aria-selected="true">Sign In</button>
-                <button type="button" class="auth-mode-tabs__btn" data-mode="signup" role="tab" aria-selected="false">Sign Up</button>
+          <article class="membership-card">
+            <div class="membership-card__head">
+              <h2>Membership categories</h2>
+              <p>Choose the option that fits your career stage</p>
+            </div>
+            <div class="membership-card__body">
+              <div class="membership-types">
+                <div class="membership-type">
+                  <h3>Student membership</h3>
+                  <p>Nominal fee of ₹1,000, valid for five years. Cannot be renewed as student membership; after expiry (or before), members may upgrade to life membership — academia or corporate.</p>
+                </div>
+                <div class="membership-type">
+                  <h3>Life membership — Academia</h3>
+                  <p>For faculty, researchers, and academic professionals. Includes privileges such as uploading positions, access to minutes of meetings, and society proceedings.</p>
+                </div>
+                <div class="membership-type">
+                  <h3>Life membership — Corporate</h3>
+                  <p>For industry professionals and corporate researchers. Same life-member privileges as the academia category.</p>
+                </div>
               </div>
-
-              <form id="signin-form" class="contact-form contact-form--plain">
-                <div class="form-group">
-                  <label for="signin-email">Email</label>
-                  <input id="signin-email" name="email" type="email" required autocomplete="username" />
-                </div>
-                <div class="form-group">
-                  <label for="signin-password">Password</label>
-                  <input id="signin-password" name="password" type="password" required autocomplete="current-password" />
-                </div>
-                <p class="auth-msg auth-msg--error" id="signin-error" role="alert" hidden></p>
-                <button type="submit" class="btn btn--primary btn--full">Sign In</button>
-              </form>
-
-              <form id="signup-form" class="contact-form contact-form--plain" hidden>
-                <div class="form-group">
-                  <label for="signup-name">Full name</label>
-                  <input id="signup-name" name="full_name" type="text" required autocomplete="name" />
-                </div>
-                <div class="form-group">
-                  <label for="signup-email">Email</label>
-                  <input id="signup-email" name="email" type="email" required autocomplete="email" />
-                </div>
-                <div class="form-group">
-                  <label for="signup-password">Password</label>
-                  <input id="signup-password" name="password" type="password" required minlength="8" autocomplete="new-password" />
-                </div>
-                <p class="auth-msg auth-msg--error" id="signup-error" role="alert" hidden></p>
-                <p class="auth-msg auth-msg--ok" id="signup-ok" hidden></p>
-                <button type="submit" class="btn btn--primary btn--full">Create account</button>
-              </form>
-
-              <form id="forgot-form" class="contact-form contact-form--plain" hidden>
-                <p class="auth-panel__lead auth-panel__lead--tight">Enter your email and we will send a password reset link.</p>
-                <div class="form-group">
-                  <label for="forgot-email">Email</label>
-                  <input id="forgot-email" name="email" type="email" required autocomplete="username" />
-                </div>
-                <p class="auth-msg auth-msg--error" id="forgot-error" role="alert" hidden></p>
-                <p class="auth-msg auth-msg--ok" id="forgot-ok" hidden></p>
-                <button type="submit" class="btn btn--primary btn--full">Send reset link</button>
-              </form>
-
-              <p class="auth-panel__links">
-                <button type="button" class="auth-text-link" id="show-forgot">Forgot password?</button>
-                <button type="button" class="auth-text-link" id="show-signin" hidden>Back to sign in</button>
-              </p>
             </div>
-          </div>
+          </article>
+
+          <article class="membership-card">
+            <div class="membership-card__head">
+              <h2>Member benefits</h2>
+              <p>What you gain as part of IPS</p>
+            </div>
+            <div class="membership-card__body">
+              <ul class="membership-benefits">
+                <li>Updates on ongoing activities and upcoming events</li>
+                <li>Free webinar participation</li>
+                <li>Newsletters and society communications</li>
+                <li>Special pricing for symposia and IPS-organized events</li>
+                <li>Networking with peptide researchers across India and abroad</li>
+                <li>Life members: upload positions, access minutes, and society proceedings</li>
+              </ul>
+              <div class="membership-cta">
+                <a href="/members.html" class="btn btn--outline">Browse member directory</a>
+                <a href="/faq.html" class="btn btn--ghost">Membership FAQ</a>
+              </div>
+            </div>
+          </article>
         </div>
       </section>
     </main>

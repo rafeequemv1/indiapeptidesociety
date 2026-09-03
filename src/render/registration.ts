@@ -7,6 +7,70 @@ import {
 } from "../lib/registration-numbers";
 import type { SymposiumRegistration, SymposiumRegistrationConfig } from "../domain/types";
 
+function formatInr(amount: number): string {
+  return `₹${amount.toLocaleString("en-IN")}`;
+}
+
+function getCategoryFee(config: SymposiumRegistrationConfig, category: string): number | null {
+  const fees = config.fees ?? {};
+  const fee = fees[category];
+  return typeof fee === "number" && fee > 0 ? fee : null;
+}
+
+function getMemberDiscount(config: SymposiumRegistrationConfig): number {
+  return Math.max(0, config.memberDiscount ?? 1000);
+}
+
+function computeRegistrationFee(
+  config: SymposiumRegistrationConfig,
+  category: string,
+  isIpsMember: boolean,
+): { baseFee: number | null; memberDiscount: number; amountDue: number | null } {
+  const baseFee = getCategoryFee(config, category);
+  if (baseFee === null) {
+    return { baseFee: null, memberDiscount: 0, amountDue: null };
+  }
+  const memberDiscount = isIpsMember ? getMemberDiscount(config) : 0;
+  const amountDue = Math.max(0, baseFee - memberDiscount);
+  return { baseFee, memberDiscount, amountDue };
+}
+
+function bindFeeSummary(config: SymposiumRegistrationConfig): void {
+  const categoryEl = document.getElementById("reg-category") as HTMLSelectElement | null;
+  const memberEl = document.getElementById("reg-is-member") as HTMLInputElement | null;
+  const memberNoWrap = document.getElementById("reg-membership-no-wrap");
+  const memberNoEl = document.getElementById("reg-membership-no") as HTMLInputElement | null;
+  const summary = document.getElementById("symp-reg-fee-summary");
+  const baseFeeEl = document.getElementById("symp-reg-base-fee");
+  const discountRow = document.getElementById("symp-reg-discount-row");
+  const discountEl = document.getElementById("symp-reg-discount");
+  const totalEl = document.getElementById("symp-reg-total-fee");
+  if (!categoryEl || !memberEl || !summary) return;
+
+  const refresh = (): void => {
+    const category = categoryEl.value;
+    const isMember = memberEl.checked;
+    if (memberNoWrap) memberNoWrap.hidden = !isMember;
+    if (memberNoEl) memberNoEl.required = isMember;
+
+    const { baseFee, memberDiscount, amountDue } = computeRegistrationFee(config, category, isMember);
+    if (baseFee === null || amountDue === null) {
+      summary.hidden = true;
+      return;
+    }
+
+    summary.hidden = false;
+    if (baseFeeEl) baseFeeEl.textContent = formatInr(baseFee);
+    if (discountRow) discountRow.hidden = memberDiscount <= 0;
+    if (discountEl) discountEl.textContent = `− ${formatInr(memberDiscount)}`;
+    if (totalEl) totalEl.textContent = formatInr(amountDue);
+  };
+
+  categoryEl.addEventListener("change", refresh);
+  memberEl.addEventListener("change", refresh);
+  refresh();
+}
+
 export function renderRegistrationPage(): void {
   const data = loadContent();
   const config = data.symposiumRegistration;
@@ -30,6 +94,7 @@ export function renderRegistrationPage(): void {
   if (page) page.dataset.state = "open";
 
   fillDetails(config);
+  bindFeeSummary(config);
   bindRegistrationForm(config);
 }
 
@@ -37,10 +102,12 @@ function fillHeroDetails(config: SymposiumRegistrationConfig, open: boolean): vo
   const details = document.getElementById("symp-reg-details");
   if (!details) return;
 
+  const discount = getMemberDiscount(config);
   const items = [
     { label: "Dates", value: config.dates || "To be announced" },
     { label: "Venue", value: config.venue || "To be announced" },
     { label: "Fee", value: config.feeNote || "Details coming soon" },
+    { label: "Member discount", value: `₹${discount.toLocaleString("en-IN")} off for IPS members` },
   ];
 
   if (open) {
@@ -48,7 +115,7 @@ function fillHeroDetails(config: SymposiumRegistrationConfig, open: boolean): vo
       label: "Payment",
       value: config.razorpayUrl.trim()
         ? "Razorpay after submit"
-        : "Link coming soon",
+        : "Razorpay coming soon",
     });
   }
 
@@ -58,7 +125,7 @@ function fillHeroDetails(config: SymposiumRegistrationConfig, open: boolean): vo
       <div class="reg-hero-detail">
         <span class="reg-hero-detail__label">${escapeHtml(item.label)}</span>
         <span class="reg-hero-detail__value">${escapeHtml(item.value)}</span>
-      </div>`
+      </div>`,
     )
     .join("");
 }
@@ -113,9 +180,21 @@ export function bindRegistrationForm(config: SymposiumRegistrationConfig): void 
       const affiliation = String(fd.get("affiliation") ?? "").trim();
       const category = String(fd.get("category") ?? "").trim();
       const abstractTitle = String(fd.get("abstractTitle") ?? "").trim();
+      const isIpsMember = fd.get("isIpsMember") === "on";
+      const ipsMembershipNo = String(fd.get("ipsMembershipNo") ?? "").trim();
       const fileInput = form.querySelector<HTMLInputElement>("#reg-abstract-file");
       const file = fileInput?.files?.[0] ?? null;
       if (!name || !email || !phone || !affiliation || !category) return;
+      if (isIpsMember && !ipsMembershipNo) {
+        alert("Please enter your IPS membership number to claim the member discount.");
+        return;
+      }
+
+      const { baseFee, memberDiscount, amountDue } = computeRegistrationFee(
+        config,
+        category,
+        isIpsMember,
+      );
 
       const submitBtnEl = document.getElementById("symp-reg-submit") as HTMLButtonElement | null;
       if (submitBtnEl) {
@@ -149,6 +228,11 @@ export function bindRegistrationForm(config: SymposiumRegistrationConfig): void 
           content.symposiumRegistration.dates || content.symposiumRegistration.title || "",
           new Date(submittedAt).getFullYear(),
         );
+        const amountLabel =
+          amountDue !== null
+            ? `${category}${isIpsMember ? " (IPS member)" : ""} — ${formatInr(amountDue)}`
+            : content.symposiumRegistration.feeNote || undefined;
+
         const registration: SymposiumRegistration = {
           id,
           name,
@@ -158,8 +242,13 @@ export function bindRegistrationForm(config: SymposiumRegistrationConfig): void 
           category,
           submittedAt,
           paymentStatus: "pending",
-          amountLabel: content.symposiumRegistration.feeNote || undefined,
+          amountLabel,
           receiptNo: allocateSymposiumNumber(content, eventYear),
+          isIpsMember,
+          ipsMembershipNo: isIpsMember ? ipsMembershipNo : undefined,
+          baseFee: baseFee ?? undefined,
+          memberDiscount: memberDiscount || undefined,
+          amountDue: amountDue ?? undefined,
           ...abstractFields,
         };
         content.symposiumRegistrations.unshift(registration);
