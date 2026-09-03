@@ -12,6 +12,33 @@ function formatInr(amount: number): string {
   return `₹${amount.toLocaleString("en-IN")}`;
 }
 
+function openMembershipModal(): void {
+  const modal = document.getElementById("membership-modal");
+  if (!modal) return;
+  modal.hidden = false;
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("membership-modal-open");
+}
+
+function closeMembershipModal(): void {
+  const modal = document.getElementById("membership-modal");
+  if (!modal) return;
+  modal.hidden = true;
+  modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("membership-modal-open");
+}
+
+function resetMembershipModal(): void {
+  const form = document.getElementById("membership-form") as HTMLFormElement | null;
+  const success = document.getElementById("membership-success");
+  if (form) {
+    form.reset();
+    form.hidden = false;
+  }
+  if (success) success.hidden = true;
+  updateMembershipFeeSummary();
+}
+
 function updateMembershipFeeSummary(): void {
   const category = (document.getElementById("mem-category") as HTMLSelectElement | null)?.value ?? "";
   const summary = document.getElementById("mem-fee-summary");
@@ -25,6 +52,27 @@ function updateMembershipFeeSummary(): void {
   }
   summary.hidden = false;
   amountEl.textContent = formatInr(fee);
+}
+
+function bindMembershipModal(): void {
+  document.getElementById("open-membership-modal")?.addEventListener("click", () => {
+    resetMembershipModal();
+    openMembershipModal();
+  });
+  document.getElementById("open-membership-modal-cta")?.addEventListener("click", () => {
+    resetMembershipModal();
+    openMembershipModal();
+  });
+
+  document.querySelectorAll("[data-membership-close]").forEach((el) => {
+    el.addEventListener("click", () => closeMembershipModal());
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !document.getElementById("membership-modal")?.hidden) {
+      closeMembershipModal();
+    }
+  });
 }
 
 function bindMembershipForm(): void {
@@ -76,4 +124,5 @@ function bindMembershipForm(): void {
 injectLayout("membership");
 initMobileMenu();
 initNewsletterForm();
+bindMembershipModal();
 bindMembershipForm();

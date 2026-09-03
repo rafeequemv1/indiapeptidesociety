@@ -1741,6 +1741,93 @@ img {
   grid-column: 1 / -1;
 }
 
+.membership-apply-btn {
+  margin-top: 1.25rem;
+}
+
+.membership-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.membership-modal[hidden] {
+  display: none !important;
+}
+
+.membership-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 39, 68, 0.55);
+}
+
+.membership-modal__dialog {
+  position: relative;
+  width: 100%;
+  max-width: 34rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  z-index: 1;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 3px;
+  box-shadow: var(--shadow-md);
+  padding: 1.75rem;
+}
+
+.membership-modal__head {
+  margin-bottom: 1.25rem;
+  padding-right: 2rem;
+}
+
+.membership-modal__head h2 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--ips-navy);
+  margin: 0 0 0.35rem;
+}
+
+.membership-modal__head p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.membership-modal__close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  z-index: 2;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+}
+
+.membership-modal__close:hover {
+  color: var(--ips-navy);
+}
+
+.membership-modal__done {
+  margin-top: 1rem;
+}
+
+body.membership-modal-open {
+  overflow: hidden;
+}
+
+.page-hero--membership .membership-apply-btn,
+.page-hero--membership .btn--primary {
+  color: #fff;
+}
+
 .membership-form {
   display: flex;
   flex-direction: column;

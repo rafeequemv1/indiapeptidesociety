@@ -21,66 +21,14 @@
         <div class="container">
           <h1 class="page-hero__title">Membership</h1>
           <p class="page-hero__sub">Join the Indian Peptide Society community</p>
+          <button type="button" class="btn btn--primary membership-apply-btn" id="open-membership-modal">
+            Apply for membership
+          </button>
         </div>
       </section>
 
       <section class="section membership-page">
         <div class="container membership-page__grid">
-          <article class="membership-card membership-card--form">
-            <div class="membership-card__head membership-card__head--navy">
-              <h2>Apply for membership</h2>
-              <p>Submit your application below — Razorpay payment will be connected shortly</p>
-            </div>
-            <div class="membership-card__body">
-              <form id="membership-form" class="membership-form contact-form contact-form--plain">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label for="mem-name">Full name</label>
-                    <input id="mem-name" name="name" type="text" required autocomplete="name" />
-                  </div>
-                  <div class="form-group">
-                    <label for="mem-email">Email</label>
-                    <input id="mem-email" name="email" type="email" required autocomplete="email" />
-                  </div>
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label for="mem-phone">Phone</label>
-                    <input id="mem-phone" name="phone" type="tel" required autocomplete="tel" />
-                  </div>
-                  <div class="form-group">
-                    <label for="mem-city">City</label>
-                    <input id="mem-city" name="city" type="text" autocomplete="address-level2" />
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label for="mem-affiliation">Affiliation / Institution</label>
-                  <input id="mem-affiliation" name="affiliation" type="text" required />
-                </div>
-                <div class="form-group">
-                  <label for="mem-category">Membership category</label>
-                  <select id="mem-category" name="category" required>
-                    <option value="">Select category</option>
-                    <option value="Student">Student membership (₹1,000 · 5 years)</option>
-                    <option value="Life Academia">Life membership — Academia</option>
-                    <option value="Life Corporate">Life membership — Corporate</option>
-                  </select>
-                </div>
-                <div class="membership-fee-summary" id="mem-fee-summary" hidden>
-                  <p><span>Application fee</span> <strong id="mem-fee-amount">—</strong></p>
-                  <p class="membership-fee-summary__note">Payment via Razorpay will open here once configured.</p>
-                </div>
-                <button type="submit" class="btn btn--primary btn--full" id="mem-submit">Submit application &amp; Pay</button>
-                <p class="symp-reg__hint">Your application is saved and will appear in the admin dashboard. Online payment through Razorpay is coming soon.</p>
-              </form>
-              <div id="membership-success" class="contact-success" hidden>
-                <p class="contact-success__title">Application received</p>
-                <p id="membership-success-msg">Thank you. We have recorded your membership application.</p>
-                <p class="symp-reg__hint">Razorpay payment will be enabled shortly. For urgent enquiries, email indianpeptidesociety@gmail.com.</p>
-              </div>
-            </div>
-          </article>
-
           <article class="membership-card">
             <div class="membership-card__head membership-card__head--navy">
               <h2>How to become a member</h2>
@@ -154,6 +102,7 @@
                 <li>Life members: upload positions, access minutes, and society proceedings</li>
               </ul>
               <div class="membership-cta">
+                <button type="button" class="btn btn--primary" id="open-membership-modal-cta">Apply for membership</button>
                 <a href="/members.html" class="btn btn--outline">Browse member directory</a>
                 <a href="/faq.html" class="btn btn--ghost">Membership FAQ</a>
               </div>
@@ -162,6 +111,64 @@
         </div>
       </section>
     </main>
+
+    <div class="membership-modal" id="membership-modal" hidden aria-hidden="true">
+      <div class="membership-modal__backdrop" data-membership-close tabindex="-1"></div>
+      <div class="membership-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="membership-modal-title">
+        <button type="button" class="membership-modal__close" data-membership-close aria-label="Close">&times;</button>
+        <div class="membership-modal__head">
+          <h2 id="membership-modal-title">Apply for membership</h2>
+          <p>Razorpay payment will be connected shortly</p>
+        </div>
+        <form id="membership-form" class="membership-form contact-form contact-form--plain">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="mem-name">Full name</label>
+              <input id="mem-name" name="name" type="text" required autocomplete="name" />
+            </div>
+            <div class="form-group">
+              <label for="mem-email">Email</label>
+              <input id="mem-email" name="email" type="email" required autocomplete="email" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="mem-phone">Phone</label>
+              <input id="mem-phone" name="phone" type="tel" required autocomplete="tel" />
+            </div>
+            <div class="form-group">
+              <label for="mem-city">City</label>
+              <input id="mem-city" name="city" type="text" autocomplete="address-level2" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="mem-affiliation">Affiliation / Institution</label>
+            <input id="mem-affiliation" name="affiliation" type="text" required />
+          </div>
+          <div class="form-group">
+            <label for="mem-category">Membership category</label>
+            <select id="mem-category" name="category" required>
+              <option value="">Select category</option>
+              <option value="Student">Student membership (₹1,000 · 5 years)</option>
+              <option value="Life Academia">Life membership — Academia</option>
+              <option value="Life Corporate">Life membership — Corporate</option>
+            </select>
+          </div>
+          <div class="membership-fee-summary" id="mem-fee-summary" hidden>
+            <p><span>Application fee</span> <strong id="mem-fee-amount">—</strong></p>
+            <p class="membership-fee-summary__note">Payment via Razorpay will open here once configured.</p>
+          </div>
+          <button type="submit" class="btn btn--primary btn--full" id="mem-submit">Submit application &amp; Pay</button>
+          <p class="symp-reg__hint">Your application is saved in the admin dashboard. Online payment through Razorpay is coming soon.</p>
+        </form>
+        <div id="membership-success" class="contact-success" hidden>
+          <p class="contact-success__title">Application received</p>
+          <p id="membership-success-msg">Thank you. We have recorded your membership application.</p>
+          <p class="symp-reg__hint">Razorpay payment will be enabled shortly. For urgent enquiries, email indianpeptidesociety@gmail.com.</p>
+          <button type="button" class="btn btn--outline membership-modal__done" data-membership-close>Close</button>
+        </div>
+      </div>
+    </div>
 
     <div id="footer-mount"></div>
     <script type="module" src="/src/membership.ts"></script>
