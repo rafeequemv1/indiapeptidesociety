@@ -28,7 +28,6 @@ const navItems: { label: string; href: string; id: PageId }[] = [
   { label: "Registration", href: "/registration.html", id: "registration" },
   { label: "Blog", href: "/blog.html", id: "blog" },
   { label: "Gallery", href: "/gallery.html", id: "gallery" },
-  { label: "Faq", href: "/faq.html", id: "faq" },
   { label: "Contact Us", href: "/contact.html", id: "contact" },
 ];
 
@@ -43,7 +42,6 @@ function navLink(item: (typeof navItems)[0], active: PageId): string {
     (active === "registration" && item.label === "Registration") ||
     (active === "blog" && item.label === "Blog") ||
     (active === "gallery" && item.label === "Gallery") ||
-    (active === "faq" && item.label === "Faq") ||
     (active === "contact" && item.label === "Contact Us");
   const activeClass = isActive ? ' class="is-active"' : "";
   const special = item.id === "ips2027" ? ' class="nav-ips2027"' : "";
@@ -70,33 +68,40 @@ function socialIcons(size = 16): string {
     </a>`;
 }
 
-export function renderTopBar(opts?: { showDashboard?: boolean }): string {
+function renderFooterUtility(opts?: { showDashboard?: boolean }): string {
   const showDashboard = Boolean(opts?.showDashboard);
   const dashboardLink = showDashboard
-    ? `
-          <span class="top-bar__divider"></span>
-          <a href="/dashboard.html" class="top-bar__dashboard">
+    ? `<a href="/dashboard.html" class="footer__dashboard">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            <span>Dashboard</span>
+            Dashboard
           </a>`
     : "";
 
   return `
+      <div class="footer__utility">
+        <div class="container footer__utility-inner">
+          <div class="footer__utility-social">${socialIcons(16)}</div>
+          <a href="mailto:indianpeptidesociety@gmail.com" class="footer__utility-email">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            indianpeptidesociety@gmail.com
+          </a>
+          <div class="footer__utility-actions">
+            ${dashboardLink}
+            <a href="/membership.html#signin" class="footer__signin" id="footer-signin">Sign In</a>
+          </div>
+        </div>
+      </div>`;
+}
+
+/** Site title strip — logo + name, centered. */
+export function renderTopBar(_opts?: { showDashboard?: boolean }): string {
+  return `
     <div class="top-bar">
       <div class="container top-bar__inner">
-        <div class="top-bar__social">${socialIcons(16)}</div>
-        <p class="top-bar__member">
-          Want to become a Member?
-          <a href="/membership.html#signup">Sign up</a>
-        </p>
-        <div class="top-bar__contact">
-          <a href="mailto:indianpeptidesociety@gmail.com" class="top-bar__email">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-            <span>indianpeptidesociety@gmail.com</span>
-          </a>${dashboardLink}
-          <span class="top-bar__divider"></span>
-          <a href="/membership.html#signin" class="top-bar__signin" id="top-bar-signin">Sign In</a>
-        </div>
+        <a href="/index.html" class="top-bar__brand">
+          <img src="/images/ips-logo.png" alt="Indian Peptide Society" class="top-bar__logo" width="220" height="48" />
+          <span class="top-bar__title">Indian Peptide Society</span>
+        </a>
       </div>
     </div>`;
 }
@@ -108,15 +113,13 @@ export function renderHeader(active: PageId): string {
   return `
     <header class="header">
       <div class="container header__inner">
-        <a href="/index.html" class="logo logo--image">
-          <img src="/images/ips-logo.png" alt="Indian Peptide Society" class="logo__img" width="220" height="48" />
-        </a>
         <nav class="nav" aria-label="Main navigation">
           ${links}
         </nav>
         <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Toggle menu" aria-expanded="false">
-          <svg class="icon-menu" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-          <svg class="icon-close" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span class="menu-toggle__label">Menu</span>
+          <svg class="icon-menu" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          <svg class="icon-close" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
       <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation">
@@ -125,9 +128,10 @@ export function renderHeader(active: PageId): string {
     </header>`;
 }
 
-export function renderFooter(): string {
+export function renderFooter(opts?: { showDashboard?: boolean }): string {
   return `
     <footer class="footer">
+      ${renderFooterUtility(opts)}
       <div class="container footer__grid">
         <div>
           <h3>Important Links</h3>
@@ -140,6 +144,7 @@ export function renderFooter(): string {
             <li><a href="/members.html?tab=permanent">Permanent Members</a></li>
             <li><a href="/blog.html">Blog</a></li>
             <li><a href="/gallery.html">Gallery</a></li>
+            <li><a href="/faq.html">FAQ</a></li>
             <li><a href="/index.html#about">About us</a></li>
             <li><a href="#">Term Of Service</a></li>
             <li><a href="#">Privacy Policy</a></li>
@@ -175,21 +180,23 @@ export function renderFooter(): string {
       </div>
       <div class="container footer__bottom">
         <p>© Copyrights 2026 IPS All rights reserved.</p>
-        <div class="footer__social">${socialIcons(18)}</div>
-        <p class="footer__credit">Designed by Ecybertech</p>
+        <p class="footer__credit">Designed by <a href="https://rafeeque.com" target="_blank" rel="noopener noreferrer">RAFEEQUE.COM</a></p>
       </div>
     </footer>`;
 }
 
-async function refreshTopBarAuth(): Promise<void> {
+async function refreshFooterAuth(): Promise<void> {
   try {
     const { authReady, getSession } = await import("./auth/session");
     if (!authReady()) return;
     const session = await getSession();
-    const bar = document.querySelector(".top-bar");
-    if (bar) bar.outerHTML = renderTopBar({ showDashboard: Boolean(session?.user) });
+    const footer = document.getElementById("footer-mount");
+    if (!footer) return;
+    footer.outerHTML = renderFooter({ showDashboard: Boolean(session?.user) });
+    const { initNewsletterForm } = await import("./shared");
+    initNewsletterForm();
   } catch {
-    /* keep top bar without dashboard link */
+    /* keep footer without dashboard link */
   }
 }
 
@@ -198,8 +205,8 @@ export function injectLayout(active: PageId): void {
   const header = document.getElementById("header-mount");
   const footer = document.getElementById("footer-mount");
 
-  if (topBar) topBar.outerHTML = renderTopBar({ showDashboard: false });
+  if (topBar) topBar.outerHTML = renderTopBar();
   if (header) header.outerHTML = renderHeader(active);
-  if (footer) footer.outerHTML = renderFooter();
-  void refreshTopBarAuth();
+  if (footer) footer.outerHTML = renderFooter({ showDashboard: false });
+  void refreshFooterAuth();
 }

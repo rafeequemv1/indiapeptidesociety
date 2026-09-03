@@ -11,6 +11,7 @@ export const defaultContent: SiteContent = {
     showCtaButton: false,
     ticker: "Symposium Registration will be held from February 25–27, 2027 at IIT Gandhinagar, Gandhinagar, Gujarat. Register online — stay tuned for updates!",
   },
+  heroImages: [],
   news: [
     { tag: "Symposium", date: "Feb 2027", title: "11th Indian Peptide Symposium", excerpt: "Join us at IIT Gandhinagar, Gujarat from 25–27 February 2027 for the premier peptide science gathering in India.", image: "" },
     { tag: "Student", date: "2026", title: "Student Indian Peptide Symposium", excerpt: "The next student symposium will be held in a different region, fostering young talent in peptide research.", image: "" },
@@ -48,7 +49,15 @@ export const defaultContent: SiteContent = {
     { name: "Prof. A A Natu", role: "", affiliation: "Former Faculty — IISER, Pune", image: "/images/team/advisor-4.png", section: "advisors" },
   ],
   upcomingSymposia: [
-    { title: "11th Indian Peptide Symposium", dates: "February 25–27, 2027", venue: "IIT Gandhinagar, Gandhinagar, Gujarat", coordinator: "Prof. Sharad Gupta", status: "Upcoming" },
+    {
+      title: "11th Indian Peptide Symposium",
+      dates: "February 25–27, 2027",
+      venue: "IIT Gandhinagar, Gandhinagar, Gujarat",
+      coordinator: "Prof. Sharad Gupta",
+      status: "Upcoming",
+      ctaLabel: "IPS 2027 Page",
+      ctaUrl: "/ips-2027.html",
+    },
     { title: "10th Indian Peptide Symposium", dates: "February 26–27, 2025", venue: "IISER Pune, Pune, Maharashtra", coordinator: "Prof. H N Gopi", status: "Completed" },
   ],
   pastSymposia: [
@@ -305,3 +314,9 @@ defaultContent.registrationCounters.member = Math.max(
   0,
 );
 
+defaultContent.heroImages = defaultContent.galleryImages.map((g, i) => ({
+  id: `hero-${i + 1}`,
+  title: g.title,
+  image: g.image,
+  storagePath: g.storagePath,
+}));

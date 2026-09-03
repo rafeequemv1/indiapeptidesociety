@@ -41,6 +41,7 @@ import { allocateMemberNumber } from "./lib/registration-numbers";
 
 type SectionId =
   | "announcement"
+  | "hero-images"
   | "news"
   | "reg-settings"
   | "reg-entries"
@@ -163,6 +164,7 @@ function formatSubmittedAt(iso: string): string {
 
 const NAV: NavItem[] = [
   { id: "announcement", label: "Announcement", breadcrumb: ["Dashboard", "Home", "Announcement"] },
+  { id: "hero-images", label: "Hero Images", breadcrumb: ["Dashboard", "Home", "Hero Images"] },
   { id: "news", label: "News", breadcrumb: ["Dashboard", "Home", "News"] },
   { id: "reg-settings", label: "Registration Settings", breadcrumb: ["Dashboard", "Registration", "Settings"] },
   { id: "reg-entries", label: "Registrations", breadcrumb: ["Dashboard", "Registration", "Entries"] },
@@ -180,7 +182,7 @@ const NAV: NavItem[] = [
 ];
 
 const NAV_GROUPS: { label: string; items: SectionId[] }[] = [
-  { label: "Home", items: ["announcement", "news"] },
+  { label: "Home", items: ["announcement", "hero-images", "news"] },
   { label: "Registration", items: ["reg-settings", "reg-entries"] },
   { label: "Members", items: ["members-all", "members-permanent", "members-executive", "members-attendees", "members-recognized"] },
   { label: "Symposiums", items: ["events-upcoming", "events-past", "events-student"] },
@@ -341,7 +343,16 @@ function renderAllMembers(): string {
 
 function renderExecutive(): string {
   const items = getExecutives()
-    .map((item, i) => listRow(item.name, `${item.role} · ${item.affiliation}`, i, true))
+    .map((item, i) =>
+      listRow(
+        item.name,
+        [item.membershipNo ? `No. ${item.membershipNo}` : "", item.role, item.affiliation]
+          .filter(Boolean)
+          .join(" · "),
+        i,
+        true,
+      ),
+    )
     .join("");
   return `
     ${panelHead("Executive Members", "Office bearers on the members page and home team section.", "+ Add executive")}
@@ -398,6 +409,23 @@ function renderGallery(): string {
   return `
     ${panelHead("Gallery", "Photos on the Gallery page. Upload an image and set a title. Files go to the Supabase gallery bucket when signed in.", "+ Add image")}
     <div class="dash-list">${items || `<p class="dash-empty">No gallery images yet.</p>`}</div>`;
+}
+
+function renderHeroImages(): string {
+  const items = content.heroImages
+    .map((item, i) =>
+      listRow(item.title || `Image ${i + 1}`, item.image ? "Shown on home hero row" : "No image", i, true, {
+        thumb: item.image || undefined,
+      }),
+    )
+    .join("");
+  return `
+    ${panelHead(
+      "Hero Images",
+      "Linear image row under the home announcement. Uses gallery photos when empty. Reorder with ↑↓.",
+      "+ Add image",
+    )}
+    <div class="dash-list">${items || `<p class="dash-empty">No hero images yet. Add photos for the home announcement strip.</p>`}</div>`;
 }
 
 function renderRegSettings(): string {
@@ -533,6 +561,7 @@ function renderPanel(): void {
 
   const map: Record<SectionId, () => string> = {
     announcement: renderAnnouncement,
+    "hero-images": renderHeroImages,
     news: renderNews,
     "reg-settings": renderRegSettings,
     "reg-entries": renderRegEntries,
@@ -677,6 +706,7 @@ function getModalFields(): FormField[] {
   if (activeSection === "members-executive") {
     return [
       { key: "name", label: "Name" },
+      { key: "membershipNo", label: "Membership No.", hint: "IPS membership number shown on the members page." },
       { key: "role", label: "Role" },
       { key: "affiliation", label: "Affiliation" },
       { key: "image", label: "Image URL (optional)" },
@@ -730,6 +760,20 @@ function getModalFields(): FormField[] {
         hint: isSupabaseConfigured()
           ? "Uploaded to the Supabase gallery bucket when you save (while signed in as admin)."
           : "Stored in browser content for now. Configure Supabase to use the gallery bucket.",
+      },
+    ];
+  }
+  if (activeSection === "hero-images") {
+    return [
+      { key: "title", label: "Caption (optional)", hint: "Short label under the image on the home hero row." },
+      {
+        key: "image",
+        label: "Image",
+        type: "file",
+        accept: "image/*",
+        hint: isSupabaseConfigured()
+          ? "Uploaded to the Supabase gallery bucket when you save (while signed in as admin)."
+          : "Stored in browser content for now.",
       },
     ];
   }
@@ -843,6 +887,7 @@ function getModalData(index: number | "new"): Record<string, string> {
     const item = getExecutives()[i];
     return {
       name: item.name,
+      membershipNo: item.membershipNo ?? "",
       role: item.role,
       affiliation: item.affiliation,
       image: item.image ?? "",
@@ -880,6 +925,13 @@ function getModalData(index: number | "new"): Record<string, string> {
   }
   if (activeSection === "gallery") {
     const item = content.galleryImages[i];
+    return {
+      title: item.title,
+      image: item.image ?? "",
+    };
+  }
+  if (activeSection === "hero-images") {
+    const item = content.heroImages[i];
     return {
       title: item.title,
       image: item.image ?? "",
@@ -942,10 +994,12 @@ function modalTitle(index: number | "new"): string {
       "members-recognized": "Add recognised person",
       blog: "Add blog post",
       gallery: "Add gallery image",
+      "hero-images": "Add hero image",
     };
     return labels[activeSection] ?? "Add item";
   }
   if (activeSection === "announcement") return "Edit announcement";
+  if (activeSection === "hero-images") return "Edit hero image";
   if (activeSection === "reg-settings") return "Edit registration settings";
   if (activeSection === "reg-entries") return "View registration";
   if (activeSection === "inbox-contact") return "View contact message";
@@ -1277,6 +1331,7 @@ async function applyModalData(data: Record<string, string>): Promise<void> {
 
   const saveExecutive = (): TeamMember => ({
     name: data.name ?? "",
+    membershipNo: (data.membershipNo ?? "").trim() || undefined,
     role: data.role ?? "",
     affiliation: data.affiliation ?? "",
     image: data.image ?? "",
@@ -1408,6 +1463,36 @@ async function applyModalData(data: Record<string, string>): Promise<void> {
         modalIndex === "new" ? content.galleryImages.length - 1 : (modalIndex as number);
       await upsertGalleryRow(item, sortOrder);
     }
+  }
+
+  if (activeSection === "hero-images") {
+    const existing = modalIndex === "new" ? null : content.heroImages[modalIndex as number];
+    const id = existing?.id ?? crypto.randomUUID();
+    let image = (data.image ?? "").trim();
+    let storagePath = existing?.storagePath;
+
+    if (!image) {
+      throw new Error("Please upload an image.");
+    }
+
+    if (image.startsWith("data:") && isSupabaseConfigured()) {
+      const file = await dataUrlToFile(image, `hero-${id}.jpg`);
+      const uploaded = await uploadGalleryImage(file, `hero-${id}`);
+      if (existing?.storagePath && existing.storagePath !== uploaded.path) {
+        await removeGalleryImage(existing.storagePath).catch(() => undefined);
+      }
+      image = uploaded.url;
+      storagePath = uploaded.path;
+    }
+
+    const item: GalleryImage = {
+      id,
+      title: (data.title ?? "").trim(),
+      image,
+      storagePath,
+    };
+    if (modalIndex === "new") content.heroImages.push(item);
+    else content.heroImages[modalIndex as number] = item;
   }
 }
 
@@ -1569,6 +1654,7 @@ function importMembersCsv(kind: string, text: string): number {
     const imported = rows
       .map((r) => ({
         name: r.name || r.Name || "",
+        membershipNo: r.membershipNo || r.MembershipNo || r["Membership No."] || undefined,
         role: r.role || r.Role || "",
         affiliation: r.affiliation || r.Affiliation || "",
         image: r.image || r.Image || "",
@@ -1702,6 +1788,7 @@ function bindPanelEvents(): void {
           "members-recognized": "recognizedPeople",
           blog: "blogPosts",
           gallery: "galleryImages",
+          "hero-images": "heroImages",
         };
         const key = lists[activeSection];
         if (key) moveItem(content[key] as unknown[], index, dir as -1 | 1);
@@ -1724,6 +1811,16 @@ function bindPanelEvents(): void {
         }
         if (removed?.id && isSupabaseConfigured()) {
           await deleteGalleryRow(removed.id).catch(() => undefined);
+        }
+        renderPanel();
+        return;
+      }
+
+      if (activeSection === "hero-images") {
+        const removed = content.heroImages[index];
+        content.heroImages.splice(index, 1);
+        if (removed?.storagePath) {
+          await removeGalleryImage(removed.storagePath).catch(() => undefined);
         }
         renderPanel();
         return;

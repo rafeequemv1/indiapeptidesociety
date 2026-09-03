@@ -40,6 +40,7 @@ export interface TeamMember {
   affiliation: string;
   image: string;
   section: "executive" | "advisors";
+  membershipNo?: string;
 }
 
 /** @deprecated Legacy shape — migrated on load */
@@ -55,6 +56,8 @@ export interface SymposiumEvent {
   venue: string;
   coordinator?: string;
   status?: string;
+  ctaLabel?: string;
+  ctaUrl?: string;
 }
 
 export interface FounderMember {
@@ -113,6 +116,9 @@ export interface GalleryImage {
   storagePath?: string;
 }
 
+/** Home announcement / hero strip images (admin-managed row). */
+export type HeroImage = GalleryImage;
+
 export interface FaqItem {
   question: string;
   answer: string;
@@ -167,6 +173,8 @@ export interface SymposiumRegistration {
 /** Aggregate used by the current UI (localStorage today, Supabase soon). */
 export interface SiteContent {
   announcement: Announcement;
+  /** Linear image row under the home announcement hero */
+  heroImages: HeroImage[];
   news: NewsItem[];
   stats: StatItem[];
   lifetimeAwards: LifetimeAward[];

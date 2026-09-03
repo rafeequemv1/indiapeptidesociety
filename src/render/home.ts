@@ -27,15 +27,22 @@ const SERVICE_ICONS = [
   `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
 ];
 
-function personCard(member: { name: string; role: string; affiliation: string; image: string }, centered = false): string {
+function personCard(
+  member: { name: string; role: string; affiliation: string; image: string; membershipNo?: string },
+  centered = false,
+): string {
   const mod = centered ? " person-card--centered" : "";
   const roleBlock = member.role
     ? `<p class="person-card__role">${escapeHtml(member.role)}</p><div class="person-card__line"></div>`
+    : "";
+  const membershipBlock = member.membershipNo
+    ? `<p class="person-card__membership">Membership No. ${escapeHtml(member.membershipNo)}</p>`
     : "";
   return `
     <article class="person-card person-card--text${mod}">
       <div class="person-card__body">
         <h3 class="person-card__name">${escapeHtml(member.name)}</h3>
+        ${membershipBlock}
         ${roleBlock}
         ${member.affiliation ? `<p class="person-card__affiliation">${escapeHtml(member.affiliation)}</p>` : ""}
       </div>
@@ -58,10 +65,12 @@ export function renderHomePage(): void {
       <p><strong>Coordinator:</strong> ${escapeHtml(data.announcement.coordinator)}</p>`;
   }
   if (ctaWrap) {
-    const parts: string[] = [];
+    const parts: string[] = [
+      `<a href="/ips-2027.html" class="btn btn--announcement">Symposium 2027</a>`,
+    ];
     if (data.symposiumRegistration.enabled) {
       parts.push(
-        `<a href="/registration.html" class="btn btn--announcement">Register</a>`,
+        `<a href="/registration.html" class="btn btn--announcement btn--announcement-secondary">Register</a>`,
       );
     }
     const { cta, ctaUrl, showCtaButton } = data.announcement;
@@ -71,6 +80,28 @@ export function renderHomePage(): void {
       );
     }
     ctaWrap.innerHTML = parts.join("");
+  }
+
+  const heroImages = document.getElementById("announcement-images");
+  if (heroImages) {
+    const fromHero = data.heroImages.filter((h) => h.image);
+    const fromGallery = data.galleryImages.filter((g) => g.image);
+    const imgs = fromHero.length ? fromHero : fromGallery;
+    if (!imgs.length) {
+      heroImages.innerHTML = "";
+      heroImages.hidden = true;
+    } else {
+      heroImages.hidden = false;
+      heroImages.innerHTML = imgs
+        .map(
+          (h) => `
+        <figure class="announcement__image">
+          <img src="${escapeHtml(h.image)}" alt="${escapeHtml(h.title || "Symposium highlight")}" loading="lazy" />
+          ${h.title ? `<figcaption>${escapeHtml(h.title)}</figcaption>` : ""}
+        </figure>`,
+        )
+        .join("");
+    }
   }
   if (ticker) {
     const text = escapeHtml(buildSymposiumTicker(data));

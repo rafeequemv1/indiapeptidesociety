@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>IPS 2027 — 11th Indian Peptide Symposium | Indian Peptide Society</title>
-    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" type="image/png" href="/favicon.png" />
     <meta
       name="description"
       content="11th Indian Peptide Symposium — IPS 2027: Peptide Science in the AI and Translational Era. 25–27 February 2027 at IIT Gandhinagar."
@@ -22,36 +23,31 @@
     <div id="header-mount"></div>
 
     <main>
+      <div class="ips2027-page-head">
       <section class="ips2027-hero">
-        <div class="ips2027-hero__bg" aria-hidden="true"></div>
-        <div class="container ips2027-hero__inner">
+        <div class="container">
+        <div class="ips2027-hero__inner">
           <p class="ips2027-hero__eyebrow">11th Indian Peptide Symposium</p>
-          <p class="ips2027-hero__brand">IPS 2027</p>
-          <h1 class="ips2027-hero__title">Peptide Science in the AI and Translational Era</h1>
-          <p class="ips2027-hero__host">
-            Hosted by IIT Gandhinagar in collaboration with the Indian Peptide Society
-          </p>
+          <h1 class="ips2027-hero__brand">IPS 2027</h1>
+          <p class="ips2027-hero__title">Peptide Science in the AI and Translational Era</p>
           <p class="ips2027-hero__meta">
             <span>25–27 February 2027</span>
             <span class="ips2027-hero__dot" aria-hidden="true">·</span>
-            <span>IIT Gandhinagar, Gujarat, India</span>
+            <span>IIT Gandhinagar, Gujarat</span>
           </p>
           <div class="ips2027-hero__actions">
-            <a href="/registration.html" class="btn btn--announcement">Register Now</a>
-            <a href="#programme" class="btn btn--outline-light ips2027-tab-link" data-tab="programme"
-              >View Programme</a
-            >
-            <a href="#papers" class="btn btn--outline-light ips2027-tab-link" data-tab="papers"
-              >Call for Papers</a
-            >
+            <a href="/registration.html" class="btn btn--primary">Register Now</a>
+            <a href="#fees" class="btn btn--outline ips2027-jump" data-section="fees">Fees</a>
+            <a href="#programme" class="btn btn--outline ips2027-jump" data-section="programme">Programme</a>
           </div>
+        </div>
         </div>
       </section>
 
       <section class="ips2027-countdown" aria-label="Countdown to IPS 2027">
         <div class="container">
-          <p class="ips2027-countdown__label">Event starts in</p>
-          <div class="ips2027-countdown__grid" id="ips2027-countdown" data-target="2027-02-25T09:00:00+05:30">
+        <p class="ips2027-countdown__label">Event starts in</p>
+        <div class="ips2027-countdown__grid" id="ips2027-countdown" data-target="2027-02-25T09:00:00+05:30">
             <div class="ips2027-countdown__cell">
               <strong id="cd-days">--</strong>
               <span>Days</span>
@@ -71,52 +67,28 @@
           </div>
         </div>
       </section>
-
-      <div class="ips2027-tabs-wrap" id="ips2027-tabs">
-        <div class="container">
-          <nav class="ips2027-tabs" role="tablist" aria-label="IPS 2027 sections">
-            <button type="button" class="ips2027-tabs__btn is-active" role="tab" aria-selected="true" data-tab="overview" id="tab-overview">
-              Overview
-            </button>
-            <button type="button" class="ips2027-tabs__btn" role="tab" aria-selected="false" data-tab="about" id="tab-about">
-              About
-            </button>
-            <button type="button" class="ips2027-tabs__btn" role="tab" aria-selected="false" data-tab="programme" id="tab-programme">
-              Programme
-            </button>
-            <button type="button" class="ips2027-tabs__btn" role="tab" aria-selected="false" data-tab="papers" id="tab-papers">
-              Abstracts
-            </button>
-            <button type="button" class="ips2027-tabs__btn" role="tab" aria-selected="false" data-tab="speakers" id="tab-speakers">
-              Speakers
-            </button>
-            <button type="button" class="ips2027-tabs__btn" role="tab" aria-selected="false" data-tab="fees" id="tab-fees">
-              Fees
-            </button>
-            <button type="button" class="ips2027-tabs__btn" role="tab" aria-selected="false" data-tab="sponsors" id="tab-sponsors">
-              Sponsors
-            </button>
-            <button type="button" class="ips2027-tabs__btn" role="tab" aria-selected="false" data-tab="venue" id="tab-venue">
-              Venue
-            </button>
-            <button type="button" class="ips2027-tabs__btn" role="tab" aria-selected="false" data-tab="faq" id="tab-faq">
-              FAQ
-            </button>
-            <button type="button" class="ips2027-tabs__btn" role="tab" aria-selected="false" data-tab="contact" id="tab-contact">
-              Contact
-            </button>
-          </nav>
-        </div>
       </div>
 
-      <div class="ips2027-panels">
+      <div class="container ips2027-layout">
+        <aside class="ips2027-side" aria-label="IPS 2027 sections">
+          <nav class="ips2027-side__nav" id="ips2027-side-nav">
+            <a href="#overview" class="ips2027-side__link is-active" data-section="overview">Overview</a>
+            <a href="#about" class="ips2027-side__link" data-section="about">About</a>
+            <a href="#programme" class="ips2027-side__link" data-section="programme">Programme</a>
+            <a href="#papers" class="ips2027-side__link" data-section="papers">Abstracts</a>
+            <a href="#speakers" class="ips2027-side__link" data-section="speakers">Speakers</a>
+            <a href="#fees" class="ips2027-side__link" data-section="fees">Fees</a>
+            <a href="#sponsors" class="ips2027-side__link" data-section="sponsors">Sponsors</a>
+            <a href="#venue" class="ips2027-side__link" data-section="venue">Venue</a>
+            <a href="#faq" class="ips2027-side__link" data-section="faq">FAQ</a>
+            <a href="#contact" class="ips2027-side__link" data-section="contact">Contact</a>
+          </nav>
+        </aside>
+
+        <div class="ips2027-main">
+        <div class="ips2027-panels">
         <!-- Overview -->
-        <section
-          class="ips2027-panel is-active"
-          id="panel-overview"
-          role="tabpanel"
-          aria-labelledby="tab-overview"
-        >
+        <section class="ips2027-panel" id="overview">
           <div class="section ips2027-welcome">
             <div class="container container--narrow">
               <p class="ips2027-welcome__text">
@@ -204,7 +176,7 @@
         </section>
 
         <!-- About / Theme -->
-        <section class="ips2027-panel" id="panel-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+        <section class="ips2027-panel" id="about">
           <div class="section">
             <div class="container container--narrow">
               <div class="section-header section-header--left">
@@ -282,13 +254,7 @@
         </section>
 
         <!-- Scientific Programme -->
-        <section
-          class="ips2027-panel"
-          id="panel-programme"
-          role="tabpanel"
-          aria-labelledby="tab-programme"
-          hidden
-        >
+        <section class="ips2027-panel" id="programme">
           <div class="section">
             <div class="container">
               <div class="section-header section-header--left">
@@ -428,7 +394,7 @@
         </section>
 
         <!-- Call for Papers -->
-        <section class="ips2027-panel" id="panel-papers" role="tabpanel" aria-labelledby="tab-papers" hidden>
+        <section class="ips2027-panel" id="papers">
           <div class="section">
             <div class="container container--narrow">
               <div class="section-header section-header--left">
@@ -482,7 +448,7 @@
         </section>
 
         <!-- Speakers -->
-        <section class="ips2027-panel" id="panel-speakers" role="tabpanel" aria-labelledby="tab-speakers" hidden>
+        <section class="ips2027-panel" id="speakers">
           <div class="section">
             <div class="container container--narrow">
               <div class="section-header section-header--left">
@@ -505,7 +471,7 @@
         </section>
 
         <!-- Registration & Fees -->
-        <section class="ips2027-panel" id="panel-fees" role="tabpanel" aria-labelledby="tab-fees" hidden>
+        <section class="ips2027-panel" id="fees">
           <div class="section">
             <div class="container container--narrow">
               <div class="section-header section-header--left">
@@ -590,7 +556,7 @@
         </section>
 
         <!-- Sponsorship -->
-        <section class="ips2027-panel" id="panel-sponsors" role="tabpanel" aria-labelledby="tab-sponsors" hidden>
+        <section class="ips2027-panel" id="sponsors">
           <div class="section">
             <div class="container">
               <div class="section-header section-header--left">
@@ -746,7 +712,7 @@
         </section>
 
         <!-- Venue & Travel -->
-        <section class="ips2027-panel" id="panel-venue" role="tabpanel" aria-labelledby="tab-venue" hidden>
+        <section class="ips2027-panel" id="venue">
           <div class="section">
             <div class="container container--narrow">
               <div class="section-header section-header--left">
@@ -806,7 +772,7 @@
         </section>
 
         <!-- FAQ -->
-        <section class="ips2027-panel" id="panel-faq" role="tabpanel" aria-labelledby="tab-faq" hidden>
+        <section class="ips2027-panel" id="faq">
           <div class="section">
             <div class="container container--narrow">
               <div class="section-header section-header--left">
@@ -864,7 +830,7 @@
         </section>
 
         <!-- Contact -->
-        <section class="ips2027-panel" id="panel-contact" role="tabpanel" aria-labelledby="tab-contact" hidden>
+        <section class="ips2027-panel" id="contact">
           <div class="section">
             <div class="container container--narrow">
               <div class="section-header section-header--left">
@@ -924,6 +890,20 @@
             </div>
           </div>
         </section>
+        </div>
+        </div>
+
+        <aside class="ips2027-register" aria-label="Registration">
+          <div class="ips2027-register__box">
+            <p class="ips2027-register__eyebrow">Registration open</p>
+            <h2 class="ips2027-register__title">Join IPS 2027</h2>
+            <p class="ips2027-register__dates">25–27 February 2027</p>
+            <p class="ips2027-register__venue">IIT Gandhinagar, Gujarat</p>
+            <p class="ips2027-register__fees">From ₹6,000 · Students, faculty &amp; industry</p>
+            <a href="/registration.html" class="btn btn--primary btn--full btn--register-cta">Register Now</a>
+            <a href="#fees" class="ips2027-register__link ips2027-jump" data-section="fees">View fee details</a>
+          </div>
+        </aside>
       </div>
     </main>
 

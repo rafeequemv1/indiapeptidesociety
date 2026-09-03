@@ -205,6 +205,7 @@ export function emptySiteContent(): SiteContent {
       showCtaButton: false,
       ticker: "",
     },
+    heroImages: [],
     news: [],
     stats: [],
     lifetimeAwards: [],

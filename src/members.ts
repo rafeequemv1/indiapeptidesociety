@@ -33,11 +33,15 @@ function renderListingCard(
     </article>`;
 }
 
+function memberNumberLine(registrationNo?: string, membershipNo?: string | number): string {
+  if (registrationNo) return `Membership No. ${registrationNo}`;
+  if (membershipNo !== undefined && membershipNo !== "") return `Membership No. ${membershipNo}`;
+  return "";
+}
+
 function renderAllMemberCard(member: SocietyMember): string {
   const lines = [
-    member.registrationNo || member.membershipNo
-      ? `Reg. No. ${member.registrationNo || member.membershipNo}`
-      : "",
+    memberNumberLine(member.registrationNo, member.membershipNo),
     member.affiliation || "",
     member.city || "",
   ];
@@ -53,9 +57,14 @@ function renderPermanentCard(member: PermanentMember): string {
 }
 
 function renderExecutiveCard(member: TeamMember): string {
+  const lines = [
+    member.membershipNo ? `Membership No. ${member.membershipNo}` : "",
+    member.role || "",
+    member.affiliation || "",
+  ];
   return renderListingCard(
     member.name,
-    [member.role || "", member.affiliation || ""],
+    lines,
     "Executive",
   );
 }
