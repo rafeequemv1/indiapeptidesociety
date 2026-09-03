@@ -216,10 +216,18 @@ function normalizeTeam(team: unknown): TeamMember[] {
   });
 
   const defaultExecutives = defaultContent.team.filter((m) => m.section === "executive");
-  const mergedExecutives = defaultExecutives.map((fallback, i) => ({
-    ...fallback,
-    ...(executives[i] ?? {}),
-  }));
+  const mergedExecutives = defaultExecutives.map((fallback, i) => {
+    const saved = executives[i] ?? {};
+    const membershipNo =
+      saved.membershipNo ||
+      fallback.membershipNo ||
+      (fallback.name ? formatMemberNo(i + 5) : undefined);
+    return {
+      ...fallback,
+      ...saved,
+      membershipNo,
+    };
+  });
 
   return [...mergedExecutives, ...mergedAdvisors];
 }

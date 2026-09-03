@@ -66,6 +66,19 @@ export function normalizeMemberDisplayNo(value: string): string {
   return trimmed.replace(/^IPS-MEM-/i, "IPS-");
 }
 
+/** Display any stored member number as IPS-######. */
+export function formatMembershipDisplayNo(value?: string | number | null): string {
+  if (value === undefined || value === null || value === "") return "";
+  const raw = String(value).trim();
+  const normalized = normalizeMemberDisplayNo(raw);
+  if (/^IPS-\d+$/i.test(normalized)) {
+    const seq = parseMemberSeq(normalized);
+    return seq > 0 ? formatMemberNo(seq) : normalized.toUpperCase();
+  }
+  const seq = parseMemberSeq(raw);
+  return seq > 0 ? formatMemberNo(seq) : normalized;
+}
+
 export function formatSymposiumNo(year: number | string, seq: number): string {
   return `IPS-SYM-${year}-${String(seq).padStart(PAD, "0")}`;
 }

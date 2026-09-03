@@ -7,12 +7,21 @@ import {
   type RecognizedPerson,
   type SocietyMember,
 } from "./data/store";
+import { formatMembershipDisplayNo } from "./lib/registration-numbers";
 import { injectLayout } from "./layout";
 import { initMobileMenu, initNewsletterForm } from "./shared";
 
 type TabId = "all" | "permanent" | "executive" | "recognized";
 
 const VALID_TABS: TabId[] = ["all", "permanent", "executive", "recognized"];
+
+interface MemberListing {
+  name: string;
+  lines: string[];
+  badge: string;
+  badgeClass: string;
+  searchBlob: string;
+}
 
 function renderListingCard(
   name: string,
@@ -33,32 +42,26 @@ function renderListingCard(
     </article>`;
 }
 
-function memberNumberLine(registrationNo?: string, membershipNo?: string | number): string {
-  if (registrationNo) return `Membership No. ${registrationNo}`;
-  if (membershipNo !== undefined && membershipNo !== "") return `Membership No. ${membershipNo}`;
-  return "";
+function membershipNoLine(...values: (string | number | undefined)[]): string {
+  const formatted = values.map((value) => formatMembershipDisplayNo(value)).find(Boolean) ?? "";
+  return formatted ? `Membership No. ${formatted}` : "";
 }
 
-function renderAllMemberCard(member: SocietyMember): string {
-  const lines = [
-    memberNumberLine(member.registrationNo, member.membershipNo),
-    member.affiliation || "",
-    member.city || "",
-  ];
-  return renderListingCard(member.name, lines, "Member");
+function renderAllMemberCard(entry: MemberListing): string {
+  return renderListingCard(entry.name, entry.lines, entry.badge, entry.badgeClass);
 }
 
 function renderPermanentCard(member: PermanentMember): string {
   const badge = member.isFounder ? "Founder" : "Permanent";
   const badgeClass = member.isFounder
     ? "people-card__badge people-card__badge--founder"
-    : "people-card__badge";
-  return renderListingCard(member.name, [`Membership No. ${member.membershipNo}`], badge, badgeClass);
+    : "people-card__badge people-card__badge--permanent";
+  return renderListingCard(member.name, [membershipNoLine(member.membershipNo)], badge, badgeClass);
 }
 
 function renderExecutiveCard(member: TeamMember): string {
   const lines = [
-    member.membershipNo ? `Membership No. ${member.membershipNo}` : "",
+    membershipNoLine(member.membershipNo),
     member.role || "",
     member.affiliation || "",
   ];
@@ -66,6 +69,7 @@ function renderExecutiveCard(member: TeamMember): string {
     member.name,
     lines,
     "Executive",
+    "people-card__badge people-card__badge--executive",
   );
 }
 
@@ -75,6 +79,66 @@ function renderRecognizedCard(person: RecognizedPerson): string {
     [person.honor, person.affiliation || "", person.year || ""],
     "Recognised",
     "people-card__badge people-card__badge--honor",
+  );
+}
+
+function buildAllListings(
+  allMembers: SocietyMember[],
+  executives: TeamMember[],
+  recognizedPeople: RecognizedPerson[],
+): MemberListing[] {
+  const executiveEntries: MemberListing[] = executives.map((member) => ({
+    name: member.name,
+    lines: [membershipNoLine(member.membershipNo), member.role || "", member.affiliation || ""].filter(Boolean),
+    badge: "Executive",
+    badgeClass: "people-card__badge people-card__badge--executive",
+    searchBlob: [
+      member.name,
+      member.role,
+      member.affiliation,
+      formatMembershipDisplayNo(member.membershipNo),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase(),
+  }));
+
+  const memberEntries: MemberListing[] = allMembers.map((member) => ({
+    name: member.name,
+    lines: [
+      membershipNoLine(member.registrationNo, member.membershipNo),
+      member.affiliation || "",
+      member.city || "",
+    ].filter(Boolean),
+    badge: "Member",
+    badgeClass: "people-card__badge people-card__badge--member",
+    searchBlob: [
+      member.name,
+      member.registrationNo,
+      member.membershipNo,
+      member.affiliation,
+      member.city,
+      formatMembershipDisplayNo(member.registrationNo),
+      formatMembershipDisplayNo(member.membershipNo),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase(),
+  }));
+
+  const recognizedEntries: MemberListing[] = recognizedPeople.map((person) => ({
+    name: person.name,
+    lines: [person.honor, person.affiliation || "", person.year || ""].filter(Boolean),
+    badge: "Recognised",
+    badgeClass: "people-card__badge people-card__badge--honor",
+    searchBlob: [person.name, person.honor, person.affiliation, person.year]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase(),
+  }));
+
+  return [...executiveEntries, ...memberEntries, ...recognizedEntries].sort((a, b) =>
+    a.name.localeCompare(b.name),
   );
 }
 
@@ -101,6 +165,8 @@ function initMembersPage(): void {
   if (!allGrid || !permanentGrid || !executiveGrid || !recognizedGrid) return;
 
   const executives = data.team.filter((m) => m.section === "executive");
+  const allListings = buildAllListings(data.allMembers, executives, data.recognizedPeople);
+
   executiveGrid.innerHTML = executives.map(renderExecutiveCard).join("");
   recognizedGrid.innerHTML = data.recognizedPeople.map(renderRecognizedCard).join("");
 
@@ -112,7 +178,7 @@ function initMembersPage(): void {
   setCount("count-permanent", data.permanentMembers.length);
   setCount("count-executive", executives.length);
   setCount("count-recognized", data.recognizedPeople.length);
-  setCount("count-all", data.allMembers.length);
+  setCount("count-all", allListings.length);
 
   let permanentPage = 0;
   let allPage = 0;
@@ -121,7 +187,13 @@ function initMembersPage(): void {
     if (reset) permanentPage = 0;
     const q = (searchInput?.value ?? "").trim().toLowerCase();
     const filtered = data.permanentMembers
-      .filter((m) => !q || m.name.toLowerCase().includes(q) || String(m.membershipNo).includes(q))
+      .filter(
+        (m) =>
+          !q ||
+          m.name.toLowerCase().includes(q) ||
+          formatMembershipDisplayNo(m.membershipNo).toLowerCase().includes(q) ||
+          String(m.membershipNo).includes(q),
+      )
       .sort((a, b) => Number(Boolean(b.isFounder)) - Number(Boolean(a.isFounder)) || a.membershipNo - b.membershipNo);
 
     const end = (permanentPage + 1) * PAGE_SIZE;
@@ -136,16 +208,7 @@ function initMembersPage(): void {
   function renderAllMembers(reset = false): void {
     if (reset) allPage = 0;
     const q = (allSearchInput?.value ?? "").trim().toLowerCase();
-    const filtered = data.allMembers.filter((m) => {
-      if (!q) return true;
-      return (
-        m.name.toLowerCase().includes(q) ||
-        (m.registrationNo || "").toLowerCase().includes(q) ||
-        (m.membershipNo || "").toLowerCase().includes(q) ||
-        (m.affiliation || "").toLowerCase().includes(q) ||
-        (m.city || "").toLowerCase().includes(q)
-      );
-    });
+    const filtered = allListings.filter((entry) => !q || entry.searchBlob.includes(q));
     const end = (allPage + 1) * PAGE_SIZE;
     const slice = filtered.slice(0, end);
     allGrid!.innerHTML =

@@ -40,9 +40,9 @@ export const defaultContent: SiteContent = {
     { title: "Research Updates", description: "Encourage members to contribute their research updates on IPS website." },
   ],
   team: [
-    { name: "Prof. K N Ganesh", role: "President — IPS", affiliation: "Former Director — IISER, Pune", image: "/images/team/ganesh.png", section: "executive" },
-    { name: "Prof. Gautam Basu", role: "Vice President — IPS", affiliation: "Indian Statistical Institute, Kolkata", image: "/images/team/basu.png", section: "executive" },
-    { name: "Prof. H. N. Gopi", role: "Secretary — IPS", affiliation: "IISER Pune, Maharashtra", image: "/images/team/gopi.png", section: "executive" },
+    { name: "Prof. K N Ganesh", role: "President — IPS", affiliation: "Former Director — IISER, Pune", image: "/images/team/ganesh.png", section: "executive", membershipNo: "5" },
+    { name: "Prof. Gautam Basu", role: "Vice President — IPS", affiliation: "Indian Statistical Institute, Kolkata", image: "/images/team/basu.png", section: "executive", membershipNo: "6" },
+    { name: "Prof. H. N. Gopi", role: "Secretary — IPS", affiliation: "IISER Pune, Maharashtra", image: "/images/team/gopi.png", section: "executive", membershipNo: "7" },
     { name: "Prof. V S Chauhan", role: "", affiliation: "Former Director — ICGEB, New Delhi", image: "/images/team/advisor-1.png", section: "advisors" },
     { name: "Prof. P Balaram", role: "", affiliation: "Former Director — IISc., Bengaluru", image: "/images/team/advisor-2.png", section: "advisors" },
     { name: "Prof. T K Chakraborty", role: "", affiliation: "Former Director — CDRI, Lucknow", image: "/images/team/advisor-3.png", section: "advisors" },

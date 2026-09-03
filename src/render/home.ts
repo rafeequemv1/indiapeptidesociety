@@ -1,4 +1,5 @@
 import { loadContent, escapeHtml } from "../data/store";
+import { formatMembershipDisplayNo } from "../lib/registration-numbers";
 import type { SiteContent } from "../domain/types";
 
 function buildSymposiumTicker(data: SiteContent): string {
@@ -36,7 +37,7 @@ function personCard(
     ? `<p class="person-card__role">${escapeHtml(member.role)}</p><div class="person-card__line"></div>`
     : "";
   const membershipBlock = member.membershipNo
-    ? `<p class="person-card__membership">Membership No. ${escapeHtml(member.membershipNo)}</p>`
+    ? `<p class="person-card__membership">Membership No. ${escapeHtml(formatMembershipDisplayNo(member.membershipNo))}</p>`
     : "";
   return `
     <article class="person-card person-card--text${mod}">

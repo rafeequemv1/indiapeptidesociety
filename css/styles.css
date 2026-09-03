@@ -189,7 +189,7 @@ img {
   width: 100%;
 }
 
-/* ===== Top Bar — logo + title, centered ===== */
+/* ===== Top Bar â logo + title, centered ===== */
 .top-bar {
   border-bottom: 1px solid #e8e8e4;
   background: #fff;
@@ -279,7 +279,7 @@ img {
   color: var(--ips-orange);
 }
 
-/* ===== Header (nav links only — compact) ===== */
+/* ===== Header (nav links only â compact) ===== */
 .header {
   position: sticky;
   top: 0;
@@ -2796,9 +2796,32 @@ body.auth-modal-open {
   color: var(--ips-orange-dark);
 }
 
-.people-card__badge--honor {
-  background: rgba(26, 39, 68, 0.08);
+.people-card__badge--executive {
+  background: rgba(26, 39, 68, 0.12);
   color: var(--ips-navy);
+}
+
+.people-card__badge--member {
+  background: rgba(196, 90, 40, 0.1);
+  color: var(--ips-orange);
+}
+
+.people-card__badge--permanent {
+  background: rgba(4, 120, 87, 0.1);
+  color: #047857;
+}
+
+.people-card__badge--honor {
+  background: rgba(139, 92, 246, 0.12);
+  color: #6d28d9;
+}
+
+.people-card--listing .people-card__badge {
+  margin-bottom: 0.35rem;
+}
+
+.people-card--listing .people-card__name {
+  margin-top: 0;
 }
 
 .people-card__photo {

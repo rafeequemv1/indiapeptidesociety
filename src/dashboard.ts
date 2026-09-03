@@ -37,7 +37,7 @@ import {
 } from "./auth/session";
 import { downloadTextFile, parseCsv, readFileAsText, readImageAsDataUrl, toCsv } from "./lib/csv";
 import { destroyBlogEditor, getBlogEditorHtml, mountBlogEditor } from "./lib/blog-editor";
-import { allocateMemberNumber } from "./lib/registration-numbers";
+import { allocateMemberNumber, formatMembershipDisplayNo } from "./lib/registration-numbers";
 
 type SectionId =
   | "announcement"
@@ -346,7 +346,7 @@ function renderExecutive(): string {
     .map((item, i) =>
       listRow(
         item.name,
-        [item.membershipNo ? `No. ${item.membershipNo}` : "", item.role, item.affiliation]
+        [item.membershipNo ? `No. ${formatMembershipDisplayNo(item.membershipNo)}` : "", item.role, item.affiliation]
           .filter(Boolean)
           .join(" · "),
         i,
