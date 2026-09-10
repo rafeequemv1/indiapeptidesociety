@@ -25,7 +25,7 @@ const navItems: { label: string; href: string; id: PageId }[] = [
   { label: "About", href: "/index.html#about", id: "home" },
   { label: "Membership", href: "/membership.html", id: "membership" },
   { label: "Members", href: "/members.html", id: "members" },
-  { label: "Symposiums", href: "/symposiums.html", id: "symposiums" },
+  { label: "Symposia", href: "/symposiums.html", id: "symposiums" },
   { label: "IPS 2027", href: "/ips-2027.html", id: "ips2027" },
   { label: "Registration", href: "/registration.html", id: "registration" },
   { label: "Blog", href: "/blog.html", id: "blog" },
@@ -38,8 +38,8 @@ function navLink(item: (typeof navItems)[0], active: PageId): string {
     (active === "home" && item.label === "Home") ||
     (active === "membership" && item.label === "Membership") ||
     (active === "members" && item.label === "Members") ||
-    (active === "symposiums" && item.label === "Symposiums") ||
-    (active === "events" && item.label === "Symposiums") ||
+    (active === "symposiums" && item.label === "Symposia") ||
+    (active === "events" && item.label === "Symposia") ||
     (active === "ips2027" && item.label === "IPS 2027") ||
     (active === "registration" && item.label === "Registration") ||
     (active === "blog" && item.label === "Blog") ||
@@ -143,7 +143,7 @@ export function renderFooter(opts?: { showDashboard?: boolean }): string {
           <ul>
             <li><a href="/index.html">Home</a></li>
             <li><a href="/ips-2027.html">IPS 2027</a></li>
-            <li><a href="/symposiums.html">All Symposiums</a></li>
+            <li><a href="/symposiums.html">All Symposia</a></li>
             <li><a href="/registration.html">Symposium Registration</a></li>
             <li><a href="/members.html">Members</a></li>
             <li><a href="/members.html?tab=students">Student Members</a></li>

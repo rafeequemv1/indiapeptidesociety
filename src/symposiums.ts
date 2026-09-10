@@ -13,17 +13,17 @@ function initSymposiumsPage(): void {
   if (upcoming) {
     upcoming.innerHTML = data.upcomingSymposia.length
       ? data.upcomingSymposia.map((e, i) => renderEventCard(e, i === 0)).join("")
-      : `<p class="symposiums-empty">No upcoming symposiums announced yet.</p>`;
+      : `<p class="symposiums-empty">No upcoming symposia announced yet.</p>`;
   }
   if (past) {
     past.innerHTML = data.pastSymposia.length
       ? data.pastSymposia.map((e) => renderEventCard(e)).join("")
-      : `<p class="symposiums-empty">Past symposiums will appear here.</p>`;
+      : `<p class="symposiums-empty">Past symposia will appear here.</p>`;
   }
   if (student) {
     student.innerHTML = data.pastStudentSymposia.length
       ? data.pastStudentSymposia.map((e) => renderEventCard(e)).join("")
-      : `<p class="symposiums-empty">Student symposiums will appear here.</p>`;
+      : `<p class="symposiums-empty">Student symposia will appear here.</p>`;
   }
 }
 

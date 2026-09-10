@@ -36,6 +36,14 @@ import {
   updatePassword,
 } from "./auth/session";
 import { downloadTextFile, parseCsv, readFileAsText, readImageAsDataUrl, toCsv } from "./lib/csv";
+import {
+  CSV_FIELD_SCHEMAS,
+  applyColumnMapping,
+  guessColumnMapping,
+  importMappedMemberRows,
+  validateMapping,
+  type MemberCsvKind,
+} from "./lib/csv-member-import";
 import { destroyBlogEditor, getBlogEditorHtml, mountBlogEditor } from "./lib/blog-editor";
 import { allocateMemberNumber, formatMembershipDisplayNo } from "./lib/registration-numbers";
 
@@ -187,7 +195,7 @@ const NAV_GROUPS: { label: string; items: SectionId[] }[] = [
   { label: "Home", items: ["announcement", "hero-images", "news"] },
   { label: "Registration", items: ["reg-settings", "reg-entries"] },
   { label: "Members", items: ["members-all", "members-students", "members-permanent", "members-executive", "members-attendees", "members-recognized"] },
-  { label: "Symposiums", items: ["events-upcoming", "events-past", "events-student"] },
+  { label: "Symposia", items: ["events-upcoming", "events-past", "events-student"] },
   { label: "Blog", items: ["blog"] },
   { label: "Gallery", items: ["gallery"] },
   { label: "Inbox", items: ["inbox-contact"] },
@@ -333,9 +341,9 @@ function membersCsvBar(kind: "all" | "students" | "permanent" | "executive" | "a
   return `
     <div class="dash-csv-bar" data-csv-kind="${kind}">
       <button type="button" class="btn btn--ghost btn--sm" data-csv-export>Export CSV</button>
-      <button type="button" class="btn btn--ghost btn--sm" data-csv-template>Download template</button>
+      <button type="button" class="btn btn--ghost btn--sm" data-csv-template>Sample template</button>
       <label class="btn btn--outline btn--sm dash-csv-import">
-        Import CSV
+        Import CSV…
         <input type="file" accept=".csv,text/csv" data-csv-import hidden />
       </label>
     </div>`;
@@ -383,7 +391,7 @@ function renderAllMembers(): string {
     )
     .join("");
   return `
-    ${panelHead("All Members", "Full member directory. New rows get IPS-###### automatically. CSV import supported.", "+ Add member")}
+    ${panelHead("All Members", "Full member directory. New rows get IPS-###### automatically. Import any CSV and map columns.", "+ Add member")}
     ${membersCsvBar("all")}
     ${tableListWrap(items, `<p class="dash-empty">No members yet.</p>`)}`;
 }
@@ -1743,107 +1751,139 @@ function downloadMembersTemplate(kind: string): void {
   downloadTextFile(t.file, toCsv(t.headers, [t.sample]));
 }
 
-function importMembersCsv(kind: string, text: string): number {
-  const { rows } = parseCsv(text);
+interface CsvImportState {
+  kind: MemberCsvKind;
+  headers: string[];
+  rawRows: Record<string, string>[];
+  mapping: Record<string, string>;
+}
+
+let csvImportState: CsvImportState | null = null;
+
+const CSV_KIND_LABELS: Record<MemberCsvKind, string> = {
+  all: "All Members",
+  students: "Student Members",
+  permanent: "Permanent Members",
+  executive: "Executive Members",
+  attendees: "Symposium Attendees",
+  recognized: "Recognised People",
+};
+
+function renderCsvImportPreview(headers: string[], rows: Record<string, string>[]): string {
+  const previewRows = rows.slice(0, 5);
+  const head = headers.map((h) => `<th>${esc(h)}</th>`).join("");
+  const body = previewRows
+    .map(
+      (row) =>
+        `<tr>${headers.map((h) => `<td title="${esc(row[h] ?? "")}">${esc(row[h] ?? "")}</td>`).join("")}</tr>`,
+    )
+    .join("");
+  return `
+    <p class="dash-csv-modal__preview-title">Preview (first ${previewRows.length} of ${rows.length} rows)</p>
+    <div class="dash-csv-modal__preview-wrap">
+      <table class="dash-csv-modal__preview">
+        <thead><tr>${head}</tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderCsvImportMapping(kind: MemberCsvKind, headers: string[], mapping: Record<string, string>): string {
+  const fields = CSV_FIELD_SCHEMAS[kind];
+  const options = (selected: string) =>
+    `<option value="">— Skip —</option>${headers
+      .map((h) => `<option value="${esc(h)}"${h === selected ? " selected" : ""}>${esc(h)}</option>`)
+      .join("")}`;
+
+  return fields
+    .map(
+      (field) => `
+      <div class="dash-csv-modal__map-row">
+        <label for="csv-map-${field.key}">${esc(field.label)}${field.required ? ' <span>(required)</span>' : ""}</label>
+        <select id="csv-map-${field.key}" data-csv-map="${field.key}">${options(mapping[field.key] ?? "")}</select>
+      </div>`,
+    )
+    .join("");
+}
+
+function readCsvImportMapping(kind: MemberCsvKind): Record<string, string> {
+  const mapping: Record<string, string> = {};
+  for (const field of CSV_FIELD_SCHEMAS[kind]) {
+    const select = document.querySelector<HTMLSelectElement>(`[data-csv-map="${field.key}"]`);
+    mapping[field.key] = select?.value ?? "";
+  }
+  return mapping;
+}
+
+function updateCsvImportImportLabel(kind: MemberCsvKind): void {
+  if (!csvImportState) return;
+  const mapping = readCsvImportMapping(kind);
+  const mappedRows = applyColumnMapping(csvImportState.rawRows, mapping);
+  const validCount = mappedRows.filter((row) =>
+    CSV_FIELD_SCHEMAS[kind].filter((f) => f.required).every((f) => (row[f.key] ?? "").trim()),
+  ).length;
+  const btn = document.getElementById("dash-csv-modal-import");
+  if (btn) btn.textContent = validCount ? `Import ${validCount} rows` : "Import";
+}
+
+function renderCsvImportModalBody(): void {
+  if (!csvImportState) return;
+  const { kind, headers, rawRows, mapping } = csvImportState;
+  const body = document.getElementById("dash-csv-modal-body");
+  const title = document.getElementById("dash-csv-modal-title");
+  if (!body) return;
+  if (title) title.textContent = `Import CSV — ${CSV_KIND_LABELS[kind]}`;
+  body.innerHTML = `
+    <p class="dash-csv-modal__summary">${rawRows.length} rows · ${headers.length} columns detected. Match your file columns to IPS fields below.</p>
+    <div class="dash-csv-modal__mapping">${renderCsvImportMapping(kind, headers, mapping)}</div>
+    ${renderCsvImportPreview(headers, rawRows)}
+    <p class="dash-csv-modal__note">Import replaces the current list. A sample template is optional — any CSV with mappable columns works.</p>`;
+  body.querySelectorAll("[data-csv-map]").forEach((select) => {
+    select.addEventListener("change", () => updateCsvImportImportLabel(kind));
+  });
+  updateCsvImportImportLabel(kind);
+}
+
+function openCsvImportModal(kind: MemberCsvKind, text: string): void {
+  const { headers, rows } = parseCsv(text);
+  if (!headers.length) throw new Error("CSV has no header row.");
   if (!rows.length) throw new Error("CSV has no data rows.");
+  csvImportState = {
+    kind,
+    headers,
+    rawRows: rows,
+    mapping: guessColumnMapping(headers, CSV_FIELD_SCHEMAS[kind]),
+  };
+  renderCsvImportModalBody();
+  const modal = document.getElementById("dash-csv-modal");
+  if (modal) modal.hidden = false;
+}
 
-  const importDirectoryMembers = (): SocietyMember[] =>
-    rows
-      .map((r) => {
-        const registrationNo = String(
-          r.registrationNo || r.RegistrationNo || r.membershipNo || r.MembershipNo || r.membership_no || "",
-        ).trim();
-        return {
-          name: r.name || r.Name || "",
-          registrationNo: registrationNo || undefined,
-          membershipNo: registrationNo || undefined,
-          affiliation: (r.affiliation || r.Affiliation || "").trim() || undefined,
-          city: (r.city || r.City || "").trim() || undefined,
-        };
-      })
-      .filter((m) => m.name)
-      .map((m) => {
-        if (m.registrationNo) return m;
-        const registrationNo = allocateMemberNumber(content);
-        return { ...m, registrationNo, membershipNo: registrationNo };
-      });
+function closeCsvImportModal(): void {
+  csvImportState = null;
+  const modal = document.getElementById("dash-csv-modal");
+  if (modal) modal.hidden = true;
+}
 
-  if (kind === "all") {
-    const imported = importDirectoryMembers();
-    if (!imported.length) {
-      throw new Error("No valid members found. Need columns: name, registrationNo, affiliation, city.");
-    }
-    content.allMembers = imported;
-    return imported.length;
+function confirmCsvImport(): void {
+  if (!csvImportState) return;
+  const { kind, rawRows } = csvImportState;
+  const mapping = readCsvImportMapping(kind);
+  const mappedRows = applyColumnMapping(rawRows, mapping);
+  const error = validateMapping(mapping, CSV_FIELD_SCHEMAS[kind], mappedRows);
+  if (error) {
+    showStatus(error, true);
+    return;
   }
-
-  if (kind === "students") {
-    const imported = importDirectoryMembers();
-    if (!imported.length) {
-      throw new Error("No valid student members found. Need columns: name, registrationNo, affiliation, city.");
-    }
-    content.studentMembers = imported;
-    return imported.length;
+  try {
+    const count = importMappedMemberRows(kind, mappedRows, content, setExecutives);
+    saveContent(content);
+    closeCsvImportModal();
+    renderPanel();
+    showStatus(`Imported ${count} rows from CSV.`);
+  } catch (err) {
+    showStatus(err instanceof Error ? err.message : "Import failed.", true);
   }
-
-  if (kind === "permanent") {
-    const imported = rows
-      .map((r) => ({
-        name: r.name || r.Name || "",
-        membershipNo: Number(r.membershipNo || r.MembershipNo || r.membership_no) || 0,
-        isFounder: /^(true|1|yes)$/i.test(r.isFounder || r.IsFounder || ""),
-      }))
-      .filter((m) => m.name);
-    if (!imported.length) throw new Error("No valid permanent members found. Need columns: name, membershipNo, isFounder.");
-    content.permanentMembers = imported;
-    return imported.length;
-  }
-
-  if (kind === "executive") {
-    const imported = rows
-      .map((r) => ({
-        name: r.name || r.Name || "",
-        membershipNo: r.membershipNo || r.MembershipNo || r["Membership No."] || undefined,
-        role: r.role || r.Role || "",
-        affiliation: r.affiliation || r.Affiliation || "",
-        image: r.image || r.Image || "",
-        section: "executive" as const,
-      }))
-      .filter((m) => m.name);
-    if (!imported.length) throw new Error("No valid executive members found.");
-    setExecutives(imported);
-    return imported.length;
-  }
-
-  if (kind === "attendees") {
-    const imported = rows
-      .map((r) => ({
-        name: r.name || r.Name || "",
-        affiliation: r.affiliation || r.Affiliation || undefined,
-        symposiumYear: Number(r.symposiumYear || r.year || r.Year) || new Date().getFullYear(),
-        symposiumTitle: r.symposiumTitle || r.title || undefined,
-      }))
-      .filter((m) => m.name);
-    if (!imported.length) throw new Error("No valid attendees found.");
-    content.symposiumAttendees = imported;
-    return imported.length;
-  }
-
-  if (kind === "recognized") {
-    const imported = rows
-      .map((r) => ({
-        name: r.name || r.Name || "",
-        honor: r.honor || r.Honor || "",
-        year: r.year || r.Year || undefined,
-        affiliation: r.affiliation || r.Affiliation || undefined,
-      }))
-      .filter((m) => m.name && m.honor);
-    if (!imported.length) throw new Error("No valid recognised people found.");
-    content.recognizedPeople = imported;
-    return imported.length;
-  }
-
-  throw new Error("Unknown member list.");
 }
 
 function bindPanelEvents(): void {
@@ -1885,15 +1925,12 @@ function bindPanelEvents(): void {
 
   panel.querySelectorAll<HTMLInputElement>("[data-csv-import]").forEach((input) => {
     input.addEventListener("change", async () => {
-      const kind = (input.closest("[data-csv-kind]") as HTMLElement | null)?.dataset.csvKind || "";
+      const kind = (input.closest("[data-csv-kind]") as HTMLElement | null)?.dataset.csvKind as MemberCsvKind | undefined;
       const file = input.files?.[0];
-      if (!file || !kind) return;
+      if (!file || !kind || !CSV_FIELD_SCHEMAS[kind]) return;
       try {
         const text = await readFileAsText(file);
-        const count = importMembersCsv(kind, text);
-        saveContent(content);
-        renderPanel();
-        showStatus(`Imported ${count} rows from CSV.`);
+        openCsvImportModal(kind, text);
       } catch (err) {
         showStatus(err instanceof Error ? err.message : "Import failed.", true);
       }
@@ -2006,6 +2043,16 @@ function bindPanelEvents(): void {
   });
 }
 
+function bindCsvImportModalEvents(): void {
+  document.getElementById("dash-csv-modal-import")?.addEventListener("click", confirmCsvImport);
+  document.querySelectorAll("[data-csv-modal-close]").forEach((el) => {
+    el.addEventListener("click", closeCsvImportModal);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && csvImportState) closeCsvImportModal();
+  });
+}
+
 function bindModalEvents(): void {
   document.getElementById("dash-modal-save")?.addEventListener("click", async () => {
     const saveBtn = document.getElementById("dash-modal-save") as HTMLButtonElement | null;
@@ -2088,6 +2135,7 @@ function bootAdminDashboard(email: string): void {
   });
 
   bindModalEvents();
+  bindCsvImportModalEvents();
   renderNav();
   renderBreadcrumb();
   renderPanel();
