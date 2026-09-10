@@ -71,7 +71,7 @@ export function renderHomePage(): void {
     ];
     if (data.symposiumRegistration.enabled) {
       parts.push(
-        `<a href="/registration.html" class="btn btn--announcement btn--announcement-secondary">Register</a>`,
+        `<a href="/registration.html" class="btn btn--register">Register</a>`,
       );
     }
     const { cta, ctaUrl, showCtaButton } = data.announcement;

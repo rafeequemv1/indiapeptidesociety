@@ -4,9 +4,12 @@ import { escapeHtml } from "../data/store";
 export function renderEventCard(event: SymposiumEvent, highlight = false): string {
   const ctaUrl = event.ctaUrl || (highlight ? "/ips-2027.html" : "");
   const ctaLabel = event.ctaLabel || (highlight ? "IPS 2027 Page" : "");
+  const isRegister =
+    /register/i.test(ctaLabel) || ctaUrl.includes("registration.html");
+  const ctaClass = isRegister ? "btn btn--register event-card__cta" : "btn btn--primary event-card__cta";
   const cta =
     ctaUrl && ctaLabel
-      ? `<a href="${escapeHtml(ctaUrl)}" class="btn btn--primary event-card__cta">${escapeHtml(ctaLabel)}</a>`
+      ? `<a href="${escapeHtml(ctaUrl)}" class="${ctaClass}">${escapeHtml(ctaLabel)}</a>`
       : "";
 
   return `

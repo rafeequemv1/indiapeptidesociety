@@ -63,8 +63,20 @@ function sectionFromHash(): SectionId {
   return "overview";
 }
 
-function setActiveNav(id: SectionId): void {
-  document.querySelectorAll<HTMLAnchorElement>(".ips2027-side__link").forEach((link) => {
+function syncChromeHeight(): number {
+  const chrome = document.getElementById("ips2027-chrome");
+  if (!chrome) return 112;
+  const height = Math.round(chrome.offsetHeight);
+  document.documentElement.style.setProperty("--ips2027-chrome-height", `${height}px`);
+  return height;
+}
+
+function stickyScrollOffset(): number {
+  return syncChromeHeight() + 8;
+}
+
+function setActiveTab(id: SectionId): void {
+  document.querySelectorAll<HTMLAnchorElement>(".ips2027-tabs__link").forEach((link) => {
     const active = link.dataset.section === id;
     link.classList.toggle("is-active", active);
     if (active) link.setAttribute("aria-current", "true");
@@ -75,18 +87,29 @@ function setActiveNav(id: SectionId): void {
 function scrollToSection(id: SectionId, pushHash = true): void {
   const el = document.getElementById(id);
   if (!el) return;
-  setActiveNav(id);
+  setActiveTab(id);
   if (pushHash) {
     const next = `#${id}`;
     if (location.hash !== next) history.replaceState(null, "", next);
   }
-  const headerOffset = 96;
-  const top = el.getBoundingClientRect().top + window.scrollY - headerOffset;
-  window.scrollTo({ top, behavior: "smooth" });
+  const top = el.getBoundingClientRect().top + window.scrollY - stickyScrollOffset();
+  window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
 }
 
-function initSideNav(): void {
-  document.querySelectorAll<HTMLAnchorElement>(".ips2027-side__link, .ips2027-jump").forEach((link) => {
+function initTabs(): void {
+  syncChromeHeight();
+
+  const chrome = document.getElementById("ips2027-chrome");
+  if (chrome && typeof ResizeObserver !== "undefined") {
+    const ro = new ResizeObserver(() => {
+      syncChromeHeight();
+    });
+    ro.observe(chrome);
+  }
+
+  window.addEventListener("resize", syncChromeHeight);
+
+  document.querySelectorAll<HTMLAnchorElement>(".ips2027-tabs__link, .ips2027-jump").forEach((link) => {
     link.addEventListener("click", (e) => {
       const id = (link.dataset.section || link.getAttribute("href")?.replace(/^#/, "") || "").toLowerCase();
       if (!isSectionId(id)) return;
@@ -106,15 +129,13 @@ function initSideNav(): void {
         .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
       const top = visible[0];
       if (!top?.target?.id || !isSectionId(top.target.id)) return;
-      setActiveNav(top.target.id);
+      setActiveTab(top.target.id);
       const next = `#${top.target.id}`;
-      if (location.hash !== next && location.hash !== "" && location.hash !== "#") {
-        history.replaceState(null, "", next);
-      }
+      if (location.hash !== next) history.replaceState(null, "", next);
     },
     {
-      rootMargin: "-20% 0px -55% 0px",
-      threshold: [0.1, 0.25, 0.5],
+      rootMargin: `-${stickyScrollOffset()}px 0px -45% 0px`,
+      threshold: [0, 0.1, 0.25, 0.5],
     },
   );
 
@@ -125,7 +146,7 @@ function initSideNav(): void {
   });
 
   const initial = sectionFromHash();
-  setActiveNav(initial);
+  setActiveTab(initial);
   if (location.hash && location.hash !== "#overview") {
     requestAnimationFrame(() => scrollToSection(initial, false));
   }
@@ -165,5 +186,5 @@ injectLayout("ips2027");
 initMobileMenu();
 initNewsletterForm();
 initCountdown();
-initSideNav();
+initTabs();
 void loadProgrammeImage();
