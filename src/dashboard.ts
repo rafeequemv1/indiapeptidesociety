@@ -50,6 +50,7 @@ type SectionId =
   | "events-student"
   | "members-permanent"
   | "members-all"
+  | "members-students"
   | "members-executive"
   | "members-attendees"
   | "members-recognized"
@@ -173,6 +174,7 @@ const NAV: NavItem[] = [
   { id: "events-student", label: "Student Symposia", breadcrumb: ["Dashboard", "Events", "Student"] },
   { id: "members-permanent", label: "Permanent Members", breadcrumb: ["Dashboard", "Members", "Permanent"] },
   { id: "members-all", label: "All Members", breadcrumb: ["Dashboard", "Members", "All Members"] },
+  { id: "members-students", label: "Student Members", breadcrumb: ["Dashboard", "Members", "Students"] },
   { id: "members-executive", label: "Executive Members", breadcrumb: ["Dashboard", "Members", "Executive"] },
   { id: "members-attendees", label: "Symposium Attendees", breadcrumb: ["Dashboard", "Members", "Attendees"] },
   { id: "members-recognized", label: "Recognised People", breadcrumb: ["Dashboard", "Members", "Recognised"] },
@@ -184,7 +186,7 @@ const NAV: NavItem[] = [
 const NAV_GROUPS: { label: string; items: SectionId[] }[] = [
   { label: "Home", items: ["announcement", "hero-images", "news"] },
   { label: "Registration", items: ["reg-settings", "reg-entries"] },
-  { label: "Members", items: ["members-all", "members-permanent", "members-executive", "members-attendees", "members-recognized"] },
+  { label: "Members", items: ["members-all", "members-students", "members-permanent", "members-executive", "members-attendees", "members-recognized"] },
   { label: "Symposiums", items: ["events-upcoming", "events-past", "events-student"] },
   { label: "Blog", items: ["blog"] },
   { label: "Gallery", items: ["gallery"] },
@@ -235,7 +237,7 @@ function listRow(
   meta: string,
   index: number,
   canReorder: boolean,
-  opts?: { editLabel?: string; canDelete?: boolean; thumb?: string },
+  opts?: { editLabel?: string; canDelete?: boolean; thumb?: string; table?: boolean },
 ): string {
   const reorder = canReorder
     ? `<button type="button" data-move="up" data-index="${index}" aria-label="Move up">↑</button>
@@ -246,8 +248,21 @@ function listRow(
   const thumb = opts?.thumb
     ? `<img class="dash-row__thumb" src="${esc(opts.thumb)}" alt="" loading="lazy" />`
     : "";
+  const rowClass = opts?.table ? "dash-row dash-row--table" : "dash-row";
+  if (opts?.table) {
+    return `
+    <div class="${rowClass}" data-index="${index}">
+      <div class="dash-row__cell dash-row__cell--name">${esc(title) || "Untitled"}</div>
+      <div class="dash-row__cell dash-row__cell--meta">${esc(meta) || "—"}</div>
+      <div class="dash-row__actions">
+        ${reorder}
+        <button type="button" class="dash-edit" data-edit="${index}">${EDIT_ICON}<span>${editLabel}</span></button>
+        ${canDelete ? `<button type="button" class="dash-delete" data-delete="${index}">Delete</button>` : ""}
+      </div>
+    </div>`;
+  }
   return `
-    <div class="dash-row" data-index="${index}">
+    <div class="${rowClass}" data-index="${index}">
       ${thumb}
       <div class="dash-row__info">
         <span class="dash-row__title">${esc(title) || "Untitled"}</span>
@@ -259,6 +274,25 @@ function listRow(
         ${canDelete ? `<button type="button" class="dash-delete" data-delete="${index}">Delete</button>` : ""}
       </div>
     </div>`;
+}
+
+function membersTableWrap(rows: string, empty?: string): string {
+  if (!rows.trim()) {
+    return `<div class="dash-list dash-list--table">${empty ?? `<p class="dash-empty">No entries yet.</p>`}</div>`;
+  }
+  return `
+    <div class="dash-list dash-list--table">
+      <div class="dash-table-head">
+        <span>Name</span>
+        <span>Details</span>
+        <span>Actions</span>
+      </div>
+      ${rows}
+    </div>`;
+}
+
+function memberMetaLine(parts: (string | undefined)[]): string {
+  return parts.filter(Boolean).join(" · ") || "—";
 }
 
 function renderAnnouncement(): string {
@@ -289,7 +323,7 @@ function renderSymposia(key: "upcomingSymposia" | "pastSymposia" | "pastStudentS
     <div class="dash-list">${items}</div>`;
 }
 
-function membersCsvBar(kind: "all" | "permanent" | "executive" | "attendees" | "recognized"): string {
+function membersCsvBar(kind: "all" | "students" | "permanent" | "executive" | "attendees" | "recognized"): string {
   return `
     <div class="dash-csv-bar" data-csv-kind="${kind}">
       <button type="button" class="btn btn--ghost btn--sm" data-csv-export>Export CSV</button>
@@ -306,9 +340,13 @@ function renderPermanent(): string {
     .map((item, i) =>
       listRow(
         item.name,
-        `No. ${item.membershipNo}${item.isFounder ? " · Founder" : ""}`,
+        memberMetaLine([
+          formatMembershipDisplayNo(item.membershipNo),
+          item.isFounder ? "Founder" : "Permanent",
+        ]),
         i,
         true,
+        { table: true },
       ),
     )
     .join("");
@@ -319,7 +357,7 @@ function renderPermanent(): string {
       <label for="total-members">Total members</label>
       <input type="number" id="total-members" value="${content.totalMembers}" />
     </div>
-    <div class="dash-list">${items}</div>`;
+    ${membersTableWrap(items, `<p class="dash-empty">No permanent members yet.</p>`)}`;
 }
 
 function renderAllMembers(): string {
@@ -327,18 +365,43 @@ function renderAllMembers(): string {
     .map((item, i) =>
       listRow(
         item.name,
-        [item.registrationNo || item.membershipNo || "", item.affiliation || "", item.city || ""]
-          .filter(Boolean)
-          .join(" · ") || "Member",
+        memberMetaLine([
+          formatMembershipDisplayNo(item.registrationNo || item.membershipNo),
+          item.affiliation,
+          item.city,
+        ]),
         i,
         true,
+        { table: true },
       ),
     )
     .join("");
   return `
     ${panelHead("All Members", "Full member directory. New rows get IPS-###### automatically. CSV import supported.", "+ Add member")}
     ${membersCsvBar("all")}
-    <div class="dash-list">${items || `<p class="dash-empty">No members yet.</p>`}</div>`;
+    ${membersTableWrap(items, `<p class="dash-empty">No members yet.</p>`)}`;
+}
+
+function renderStudentMembers(): string {
+  const items = content.studentMembers
+    .map((item, i) =>
+      listRow(
+        item.name,
+        memberMetaLine([
+          formatMembershipDisplayNo(item.registrationNo || item.membershipNo),
+          item.affiliation,
+          item.city,
+        ]),
+        i,
+        true,
+        { table: true },
+      ),
+    )
+    .join("");
+  return `
+    ${panelHead("Student Members", "Student membership list (5-year validity). Shown on the public Members page.", "+ Add student")}
+    ${membersCsvBar("students")}
+    ${membersTableWrap(items, `<p class="dash-empty">No student members yet.</p>`)}`;
 }
 
 function renderExecutive(): string {
@@ -346,18 +409,21 @@ function renderExecutive(): string {
     .map((item, i) =>
       listRow(
         item.name,
-        [item.membershipNo ? `No. ${formatMembershipDisplayNo(item.membershipNo)}` : "", item.role, item.affiliation]
-          .filter(Boolean)
-          .join(" · "),
+        memberMetaLine([
+          item.membershipNo ? formatMembershipDisplayNo(item.membershipNo) : undefined,
+          item.role,
+          item.affiliation,
+        ]),
         i,
         true,
+        { table: true },
       ),
     )
     .join("");
   return `
     ${panelHead("Executive Members", "Office bearers on the members page and home team section.", "+ Add executive")}
     ${membersCsvBar("executive")}
-    <div class="dash-list">${items}</div>`;
+    ${membersTableWrap(items, `<p class="dash-empty">No executive members yet.</p>`)}`;
 }
 
 function renderAttendees(): string {
@@ -365,28 +431,39 @@ function renderAttendees(): string {
     .map((item, i) =>
       listRow(
         item.name,
-        `${item.symposiumYear}${item.affiliation ? ` · ${item.affiliation}` : ""}`,
+        memberMetaLine([
+          String(item.symposiumYear),
+          item.symposiumTitle,
+          item.affiliation,
+        ]),
         i,
         true,
+        { table: true },
       ),
     )
     .join("");
   return `
     ${panelHead("Symposium Attendees", "One symposium per year — filterable by year on the members page.", "+ Add attendee")}
     ${membersCsvBar("attendees")}
-    <div class="dash-list">${items}</div>`;
+    ${membersTableWrap(items, `<p class="dash-empty">No attendees yet.</p>`)}`;
 }
 
 function renderRecognized(): string {
   const items = content.recognizedPeople
     .map((item, i) =>
-      listRow(item.name, `${item.honor}${item.year ? ` · ${item.year}` : ""}`, i, true),
+      listRow(
+        item.name,
+        memberMetaLine([item.honor, item.year, item.affiliation]),
+        i,
+        true,
+        { table: true },
+      ),
     )
     .join("");
   return `
     ${panelHead("Recognised People", "Lifetime Achievement and Young Scientist honorees.", "+ Add person")}
     ${membersCsvBar("recognized")}
-    <div class="dash-list">${items}</div>`;
+    ${membersTableWrap(items, `<p class="dash-empty">No recognised people yet.</p>`)}`;
 }
 
 function renderBlog(): string {
@@ -570,6 +647,7 @@ function renderPanel(): void {
     "events-student": () => renderSymposia("pastStudentSymposia", "Past Student Symposia", "Events page — student tab."),
     "members-permanent": renderPermanent,
     "members-all": renderAllMembers,
+    "members-students": renderStudentMembers,
     "members-executive": renderExecutive,
     "members-attendees": renderAttendees,
     "members-recognized": renderRecognized,
@@ -691,7 +769,7 @@ function getModalFields(): FormField[] {
       { key: "isFounder", label: "Founder member (shows Founder badge)", type: "checkbox" },
     ];
   }
-  if (activeSection === "members-all") {
+  if (activeSection === "members-all" || activeSection === "members-students") {
     return [
       { key: "name", label: "Name" },
       {
@@ -883,6 +961,15 @@ function getModalData(index: number | "new"): Record<string, string> {
       city: item.city ?? "",
     };
   }
+  if (activeSection === "members-students") {
+    const item = content.studentMembers[i];
+    return {
+      name: item.name,
+      registrationNo: item.registrationNo || item.membershipNo || "",
+      affiliation: item.affiliation ?? "",
+      city: item.city ?? "",
+    };
+  }
   if (activeSection === "members-executive") {
     const item = getExecutives()[i];
     return {
@@ -989,6 +1076,7 @@ function modalTitle(index: number | "new"): string {
       "events-student": "Add symposium",
       "members-permanent": "Add permanent member",
       "members-all": "Add member",
+      "members-students": "Add student",
       "members-executive": "Add executive",
       "members-attendees": "Add attendee",
       "members-recognized": "Add recognised person",
@@ -1010,6 +1098,7 @@ function modalTitle(index: number | "new"): string {
     "events-student": "Edit symposium",
     "members-permanent": "Edit permanent member",
     "members-all": "Edit member",
+    "members-students": "Edit student",
     "members-executive": "Edit executive",
     "members-attendees": "Edit attendee",
     "members-recognized": "Edit recognised person",
@@ -1311,9 +1400,11 @@ async function applyModalData(data: Record<string, string>): Promise<void> {
     isFounder: data.isFounder === "true",
   });
 
-  const saveSocietyMember = (): SocietyMember => {
-    const existing =
-      modalIndex === "new" ? null : content.allMembers[modalIndex as number];
+  const saveDirectoryMember = (
+    list: SocietyMember[],
+    index: number | "new",
+  ): SocietyMember => {
+    const existing = index === "new" ? null : list[index];
     const provided = (data.registrationNo ?? "").trim();
     const registrationNo =
       provided ||
@@ -1328,6 +1419,9 @@ async function applyModalData(data: Record<string, string>): Promise<void> {
       city: (data.city ?? "").trim() || undefined,
     };
   };
+
+  const saveSocietyMember = (): SocietyMember =>
+    saveDirectoryMember(content.allMembers, modalIndex ?? "new");
 
   const saveExecutive = (): TeamMember => ({
     name: data.name ?? "",
@@ -1396,6 +1490,13 @@ async function applyModalData(data: Record<string, string>): Promise<void> {
     const item = saveSocietyMember();
     if (modalIndex === "new") content.allMembers.push(item);
     else content.allMembers[modalIndex as number] = item;
+    return;
+  }
+
+  if (activeSection === "members-students") {
+    const item = saveDirectoryMember(content.studentMembers, modalIndex ?? "new");
+    if (modalIndex === "new") content.studentMembers.push(item);
+    else content.studentMembers[modalIndex as number] = item;
     return;
   }
 
@@ -1518,6 +1619,21 @@ function exportMembersCsv(kind: string): void {
     );
     return;
   }
+  if (kind === "students") {
+    downloadTextFile(
+      "ips-student-members.csv",
+      toCsv(
+        ["name", "registrationNo", "affiliation", "city"],
+        content.studentMembers.map((m) => [
+          m.name,
+          m.registrationNo || m.membershipNo || "",
+          m.affiliation ?? "",
+          m.city ?? "",
+        ]),
+      ),
+    );
+    return;
+  }
   if (kind === "permanent") {
     downloadTextFile(
       "ips-permanent-members.csv",
@@ -1580,6 +1696,11 @@ function downloadMembersTemplate(kind: string): void {
       headers: ["name", "registrationNo", "affiliation", "city"],
       sample: ["Dr. Example Name", "IPS-000101", "IISER Pune", "Pune"],
     },
+    students: {
+      file: "ips-student-members-template.csv",
+      headers: ["name", "registrationNo", "affiliation", "city"],
+      sample: ["Student Example", "IPS-000501", "IISER Mohali", "Mohali"],
+    },
     permanent: {
       file: "ips-permanent-members-template.csv",
       headers: ["name", "membershipNo", "isFounder"],
@@ -1610,8 +1731,8 @@ function importMembersCsv(kind: string, text: string): number {
   const { rows } = parseCsv(text);
   if (!rows.length) throw new Error("CSV has no data rows.");
 
-  if (kind === "all") {
-    const imported = rows
+  const importDirectoryMembers = (): SocietyMember[] =>
+    rows
       .map((r) => {
         const registrationNo = String(
           r.registrationNo || r.RegistrationNo || r.membershipNo || r.MembershipNo || r.membership_no || "",
@@ -1630,10 +1751,22 @@ function importMembersCsv(kind: string, text: string): number {
         const registrationNo = allocateMemberNumber(content);
         return { ...m, registrationNo, membershipNo: registrationNo };
       });
+
+  if (kind === "all") {
+    const imported = importDirectoryMembers();
     if (!imported.length) {
       throw new Error("No valid members found. Need columns: name, registrationNo, affiliation, city.");
     }
     content.allMembers = imported;
+    return imported.length;
+  }
+
+  if (kind === "students") {
+    const imported = importDirectoryMembers();
+    if (!imported.length) {
+      throw new Error("No valid student members found. Need columns: name, registrationNo, affiliation, city.");
+    }
+    content.studentMembers = imported;
     return imported.length;
   }
 
@@ -1784,6 +1917,7 @@ function bindPanelEvents(): void {
           "events-student": "pastStudentSymposia",
           "members-permanent": "permanentMembers",
           "members-all": "allMembers",
+          "members-students": "studentMembers",
           "members-attendees": "symposiumAttendees",
           "members-recognized": "recognizedPeople",
           blog: "blogPosts",
@@ -1833,6 +1967,7 @@ function bindPanelEvents(): void {
         "events-student": () => content.pastStudentSymposia.splice(index, 1),
         "members-permanent": () => content.permanentMembers.splice(index, 1),
         "members-all": () => content.allMembers.splice(index, 1),
+        "members-students": () => content.studentMembers.splice(index, 1),
         "members-executive": () => {
           const executives = getExecutives();
           executives.splice(index, 1);

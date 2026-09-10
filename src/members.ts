@@ -11,9 +11,9 @@ import { formatMembershipDisplayNo } from "./lib/registration-numbers";
 import { injectLayout } from "./layout";
 import { initMobileMenu, initNewsletterForm } from "./shared";
 
-type TabId = "all" | "permanent" | "executive" | "recognized";
+type TabId = "all" | "students" | "permanent" | "executive" | "recognized";
 
-const VALID_TABS: TabId[] = ["all", "permanent", "executive", "recognized"];
+const VALID_TABS: TabId[] = ["all", "students", "permanent", "executive", "recognized"];
 
 interface MemberListing {
   name: string;
@@ -47,7 +47,32 @@ function membershipNoLine(...values: (string | number | undefined)[]): string {
   return formatted ? `Membership No. ${formatted}` : "";
 }
 
-function renderAllMemberCard(entry: MemberListing): string {
+function societyMemberListing(member: SocietyMember, badge: string, badgeClass: string): MemberListing {
+  return {
+    name: member.name,
+    lines: [
+      membershipNoLine(member.registrationNo, member.membershipNo),
+      member.affiliation || "",
+      member.city || "",
+    ].filter(Boolean),
+    badge,
+    badgeClass,
+    searchBlob: [
+      member.name,
+      member.registrationNo,
+      member.membershipNo,
+      member.affiliation,
+      member.city,
+      formatMembershipDisplayNo(member.registrationNo),
+      formatMembershipDisplayNo(member.membershipNo),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase(),
+  };
+}
+
+function renderListing(entry: MemberListing): string {
   return renderListingCard(entry.name, entry.lines, entry.badge, entry.badgeClass);
 }
 
@@ -84,6 +109,7 @@ function renderRecognizedCard(person: RecognizedPerson): string {
 
 function buildAllListings(
   allMembers: SocietyMember[],
+  studentMembers: SocietyMember[],
   executives: TeamMember[],
   recognizedPeople: RecognizedPerson[],
 ): MemberListing[] {
@@ -103,28 +129,13 @@ function buildAllListings(
       .toLowerCase(),
   }));
 
-  const memberEntries: MemberListing[] = allMembers.map((member) => ({
-    name: member.name,
-    lines: [
-      membershipNoLine(member.registrationNo, member.membershipNo),
-      member.affiliation || "",
-      member.city || "",
-    ].filter(Boolean),
-    badge: "Member",
-    badgeClass: "people-card__badge people-card__badge--member",
-    searchBlob: [
-      member.name,
-      member.registrationNo,
-      member.membershipNo,
-      member.affiliation,
-      member.city,
-      formatMembershipDisplayNo(member.registrationNo),
-      formatMembershipDisplayNo(member.membershipNo),
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase(),
-  }));
+  const memberEntries = allMembers.map((member) =>
+    societyMemberListing(member, "Member", "people-card__badge people-card__badge--member"),
+  );
+
+  const studentEntries = studentMembers.map((member) =>
+    societyMemberListing(member, "Student", "people-card__badge people-card__badge--student"),
+  );
 
   const recognizedEntries: MemberListing[] = recognizedPeople.map((person) => ({
     name: person.name,
@@ -137,7 +148,7 @@ function buildAllListings(
       .toLowerCase(),
   }));
 
-  return [...executiveEntries, ...memberEntries, ...recognizedEntries].sort((a, b) =>
+  return [...executiveEntries, ...studentEntries, ...memberEntries, ...recognizedEntries].sort((a, b) =>
     a.name.localeCompare(b.name),
   );
 }
@@ -147,25 +158,35 @@ function initMembersPage(): void {
   const navItems = document.querySelectorAll<HTMLButtonElement>(".members-nav__item[data-tab]");
   const panels: Record<TabId, HTMLElement | null> = {
     all: document.getElementById("panel-all"),
+    students: document.getElementById("panel-students"),
     permanent: document.getElementById("panel-permanent"),
     executive: document.getElementById("panel-executive"),
     recognized: document.getElementById("panel-recognized"),
   };
   const allGrid = document.getElementById("all-members-grid");
+  const studentsGrid = document.getElementById("students-grid");
   const permanentGrid = document.getElementById("permanent-grid");
   const executiveGrid = document.getElementById("executive-grid");
   const recognizedGrid = document.getElementById("recognized-grid");
   const searchInput = document.getElementById("member-search") as HTMLInputElement | null;
+  const studentSearchInput = document.getElementById("student-search") as HTMLInputElement | null;
   const allSearchInput = document.getElementById("all-member-search") as HTMLInputElement | null;
   const resultsText = document.getElementById("results-text");
+  const studentResultsText = document.getElementById("student-results-text");
   const allResultsText = document.getElementById("all-results-text");
   const nextBtn = document.getElementById("next-page") as HTMLButtonElement | null;
+  const studentNextBtn = document.getElementById("student-next-page") as HTMLButtonElement | null;
   const allNextBtn = document.getElementById("all-next-page") as HTMLButtonElement | null;
 
-  if (!allGrid || !permanentGrid || !executiveGrid || !recognizedGrid) return;
+  if (!allGrid || !studentsGrid || !permanentGrid || !executiveGrid || !recognizedGrid) return;
 
   const executives = data.team.filter((m) => m.section === "executive");
-  const allListings = buildAllListings(data.allMembers, executives, data.recognizedPeople);
+  const allListings = buildAllListings(
+    data.allMembers,
+    data.studentMembers,
+    executives,
+    data.recognizedPeople,
+  );
 
   executiveGrid.innerHTML = executives.map(renderExecutiveCard).join("");
   recognizedGrid.innerHTML = data.recognizedPeople.map(renderRecognizedCard).join("");
@@ -176,11 +197,13 @@ function initMembersPage(): void {
   }
 
   setCount("count-permanent", data.permanentMembers.length);
+  setCount("count-students", data.studentMembers.length);
   setCount("count-executive", executives.length);
   setCount("count-recognized", data.recognizedPeople.length);
   setCount("count-all", allListings.length);
 
   let permanentPage = 0;
+  let studentPage = 0;
   let allPage = 0;
 
   function renderPermanent(reset = false): void {
@@ -205,6 +228,28 @@ function initMembersPage(): void {
     if (nextBtn) nextBtn.hidden = end >= filtered.length;
   }
 
+  function renderStudents(reset = false): void {
+    if (reset) studentPage = 0;
+    const q = (studentSearchInput?.value ?? "").trim().toLowerCase();
+    const filtered = data.studentMembers.filter(
+      (m) =>
+        !q ||
+        m.name.toLowerCase().includes(q) ||
+        formatMembershipDisplayNo(m.registrationNo || m.membershipNo).toLowerCase().includes(q) ||
+        (m.affiliation || "").toLowerCase().includes(q) ||
+        (m.city || "").toLowerCase().includes(q),
+    );
+    const end = (studentPage + 1) * PAGE_SIZE;
+    const slice = filtered.slice(0, end);
+    studentsGrid!.innerHTML =
+      slice.map((m) => renderListing(societyMemberListing(m, "Student", "people-card__badge people-card__badge--student"))).join("") ||
+      `<p class="members-empty">No student members yet. Add them from the dashboard.</p>`;
+    if (studentResultsText) {
+      studentResultsText.textContent = `Showing ${slice.length} of ${filtered.length}`;
+    }
+    if (studentNextBtn) studentNextBtn.hidden = end >= filtered.length;
+  }
+
   function renderAllMembers(reset = false): void {
     if (reset) allPage = 0;
     const q = (allSearchInput?.value ?? "").trim().toLowerCase();
@@ -212,7 +257,7 @@ function initMembersPage(): void {
     const end = (allPage + 1) * PAGE_SIZE;
     const slice = filtered.slice(0, end);
     allGrid!.innerHTML =
-      slice.map(renderAllMemberCard).join("") ||
+      slice.map(renderListing).join("") ||
       `<p class="members-empty">No members in the directory yet. Add them from the dashboard.</p>`;
     if (allResultsText) {
       allResultsText.textContent = `Showing ${slice.length} of ${filtered.length}`;
@@ -245,6 +290,12 @@ function initMembersPage(): void {
     renderPermanent();
   });
 
+  studentSearchInput?.addEventListener("input", () => renderStudents(true));
+  studentNextBtn?.addEventListener("click", () => {
+    studentPage += 1;
+    renderStudents();
+  });
+
   allSearchInput?.addEventListener("input", () => renderAllMembers(true));
   allNextBtn?.addEventListener("click", () => {
     allPage += 1;
@@ -252,6 +303,7 @@ function initMembersPage(): void {
   });
 
   renderPermanent(true);
+  renderStudents(true);
   renderAllMembers(true);
 
   const params = new URLSearchParams(window.location.search);

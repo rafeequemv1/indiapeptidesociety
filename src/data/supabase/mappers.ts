@@ -233,6 +233,7 @@ export function emptySiteContent(): SiteContent {
     },
     contactMessages: [],
     membershipApplications: [],
+    studentMembers: [],
     symposiumRegistrations: [],
     totalMembers: 0,
     faqItems: [],

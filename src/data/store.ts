@@ -130,6 +130,7 @@ function normalizeContent(parsed: Partial<SiteContent>): SiteContent {
     team: normalizeTeam(parsed.team),
     permanentMembers,
     allMembers,
+    studentMembers: Array.isArray(parsed.studentMembers) ? parsed.studentMembers : base.studentMembers,
     symposiumAttendees: parsed.symposiumAttendees?.length
       ? parsed.symposiumAttendees
       : base.symposiumAttendees,

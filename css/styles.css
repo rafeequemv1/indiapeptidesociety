@@ -2806,6 +2806,11 @@ body.auth-modal-open {
   color: var(--ips-orange);
 }
 
+.people-card__badge--student {
+  background: rgba(2, 132, 199, 0.12);
+  color: #0369a1;
+}
+
 .people-card__badge--permanent {
   background: rgba(4, 120, 87, 0.1);
   color: #047857;

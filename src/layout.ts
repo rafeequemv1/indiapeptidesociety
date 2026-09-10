@@ -146,6 +146,7 @@ export function renderFooter(opts?: { showDashboard?: boolean }): string {
             <li><a href="/symposiums.html">All Symposiums</a></li>
             <li><a href="/registration.html">Symposium Registration</a></li>
             <li><a href="/members.html">Members</a></li>
+            <li><a href="/members.html?tab=students">Student Members</a></li>
             <li><a href="/members.html?tab=permanent">Permanent Members</a></li>
             <li><a href="/blog.html">Blog</a></li>
             <li><a href="/gallery.html">Gallery</a></li>

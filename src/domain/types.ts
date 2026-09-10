@@ -211,6 +211,8 @@ export interface SiteContent {
   permanentMembers: PermanentMember[];
   /** Full member directory shown under Members → All Members */
   allMembers: SocietyMember[];
+  /** Student membership directory (5-year student members) */
+  studentMembers: SocietyMember[];
   /** @deprecated Migrated to permanentMembers */
   directoryMembers?: PermanentMember[];
   symposiumAttendees: SymposiumAttendee[];

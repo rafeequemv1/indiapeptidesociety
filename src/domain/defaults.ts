@@ -121,6 +121,7 @@ export const defaultContent: SiteContent = {
     { name: "Bhalchandra Kulkarni", membershipNo: 425 },
   ],
   allMembers: [],
+  studentMembers: [],
   symposiumAttendees: [
     { name: "Ananya Sharma", affiliation: "IISER Pune", symposiumYear: 2025, symposiumTitle: "10th Indian Peptide Symposium" },
     { name: "Rohan Mehta", affiliation: "IIT Bombay", symposiumYear: 2025, symposiumTitle: "10th Indian Peptide Symposium" },
@@ -317,6 +318,22 @@ defaultContent.allMembers = defaultContent.permanentMembers.map((m) => ({
   affiliation: "",
   city: "",
 }));
+defaultContent.studentMembers = [
+  {
+    name: "Priya Sharma",
+    registrationNo: "IPS-000501",
+    membershipNo: "IPS-000501",
+    affiliation: "IISER Mohali",
+    city: "Mohali",
+  },
+  {
+    name: "Arjun Mehta",
+    registrationNo: "IPS-000502",
+    membershipNo: "IPS-000502",
+    affiliation: "NIPER Hyderabad",
+    city: "Hyderabad",
+  },
+];
 defaultContent.registrationCounters.member = Math.max(
   ...defaultContent.permanentMembers.map((m) => m.membershipNo),
   0,
