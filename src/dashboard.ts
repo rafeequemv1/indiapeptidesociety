@@ -250,9 +250,12 @@ function listRow(
     : "";
   const rowClass = opts?.table ? "dash-row dash-row--table" : "dash-row";
   if (opts?.table) {
+    const nameCell = thumb
+      ? `<span class="dash-row__name-with-thumb">${thumb}<span>${esc(title) || "Untitled"}</span></span>`
+      : esc(title) || "Untitled";
     return `
     <div class="${rowClass}" data-index="${index}">
-      <div class="dash-row__cell dash-row__cell--name">${esc(title) || "Untitled"}</div>
+      <div class="dash-row__cell dash-row__cell--name">${nameCell}</div>
       <div class="dash-row__cell dash-row__cell--meta">${esc(meta) || "—"}</div>
       <div class="dash-row__actions">
         ${reorder}
@@ -276,16 +279,17 @@ function listRow(
     </div>`;
 }
 
-function membersTableWrap(rows: string, empty?: string): string {
+function tableListWrap(rows: string, empty?: string, head?: [string, string, string]): string {
+  const [col1, col2, col3] = head ?? ["Name", "Details", "Actions"];
   if (!rows.trim()) {
     return `<div class="dash-list dash-list--table">${empty ?? `<p class="dash-empty">No entries yet.</p>`}</div>`;
   }
   return `
     <div class="dash-list dash-list--table">
       <div class="dash-table-head">
-        <span>Name</span>
-        <span>Details</span>
-        <span>Actions</span>
+        <span>${col1}</span>
+        <span>${col2}</span>
+        <span>${col3}</span>
       </div>
       ${rows}
     </div>`;
@@ -300,27 +304,29 @@ function renderAnnouncement(): string {
   const preview = a.lead.slice(0, 80) + (a.lead.length > 80 ? "…" : "");
   return `
     ${panelHead("Announcement", "Home page banner and ticker text.")}
-    <div class="dash-list">
-      ${listRow(a.dates || "Home announcement", preview || a.ticker, 0, false)}
-    </div>`;
+    ${tableListWrap(
+      listRow(a.dates || "Home announcement", preview || a.ticker, 0, false, { table: true }),
+      undefined,
+      ["Title", "Preview", "Actions"],
+    )}`;
 }
 
 function renderNews(): string {
   const items = content.news
-    .map((item, i) => listRow(item.title, `${item.tag} · ${item.date}`, i, true))
+    .map((item, i) => listRow(item.title, `${item.tag} · ${item.date}`, i, true, { table: true }))
     .join("");
   return `
     ${panelHead("News", "Latest info cards on the home page.", "+ Add news")}
-    <div class="dash-list">${items}</div>`;
+    ${tableListWrap(items, `<p class="dash-empty">No news items yet.</p>`, ["Title", "Tag & date", "Actions"])}`;
 }
 
 function renderSymposia(key: "upcomingSymposia" | "pastSymposia" | "pastStudentSymposia", title: string, desc: string): string {
   const items = content[key]
-    .map((item, i) => listRow(item.title, `${item.dates} · ${item.venue}`, i, true))
+    .map((item, i) => listRow(item.title, `${item.dates} · ${item.venue}`, i, true, { table: true }))
     .join("");
   return `
     ${panelHead(title, desc, "+ Add symposium")}
-    <div class="dash-list">${items}</div>`;
+    ${tableListWrap(items, `<p class="dash-empty">No symposia yet.</p>`, ["Title", "Dates & venue", "Actions"])}`;
 }
 
 function membersCsvBar(kind: "all" | "students" | "permanent" | "executive" | "attendees" | "recognized"): string {
@@ -357,7 +363,7 @@ function renderPermanent(): string {
       <label for="total-members">Total members</label>
       <input type="number" id="total-members" value="${content.totalMembers}" />
     </div>
-    ${membersTableWrap(items, `<p class="dash-empty">No permanent members yet.</p>`)}`;
+    ${tableListWrap(items, `<p class="dash-empty">No permanent members yet.</p>`)}`;
 }
 
 function renderAllMembers(): string {
@@ -379,7 +385,7 @@ function renderAllMembers(): string {
   return `
     ${panelHead("All Members", "Full member directory. New rows get IPS-###### automatically. CSV import supported.", "+ Add member")}
     ${membersCsvBar("all")}
-    ${membersTableWrap(items, `<p class="dash-empty">No members yet.</p>`)}`;
+    ${tableListWrap(items, `<p class="dash-empty">No members yet.</p>`)}`;
 }
 
 function renderStudentMembers(): string {
@@ -401,7 +407,7 @@ function renderStudentMembers(): string {
   return `
     ${panelHead("Student Members", "Student membership list (5-year validity). Shown on the public Members page.", "+ Add student")}
     ${membersCsvBar("students")}
-    ${membersTableWrap(items, `<p class="dash-empty">No student members yet.</p>`)}`;
+    ${tableListWrap(items, `<p class="dash-empty">No student members yet.</p>`)}`;
 }
 
 function renderExecutive(): string {
@@ -423,7 +429,7 @@ function renderExecutive(): string {
   return `
     ${panelHead("Executive Members", "Office bearers on the members page and home team section.", "+ Add executive")}
     ${membersCsvBar("executive")}
-    ${membersTableWrap(items, `<p class="dash-empty">No executive members yet.</p>`)}`;
+    ${tableListWrap(items, `<p class="dash-empty">No executive members yet.</p>`)}`;
 }
 
 function renderAttendees(): string {
@@ -445,7 +451,7 @@ function renderAttendees(): string {
   return `
     ${panelHead("Symposium Attendees", "One symposium per year — filterable by year on the members page.", "+ Add attendee")}
     ${membersCsvBar("attendees")}
-    ${membersTableWrap(items, `<p class="dash-empty">No attendees yet.</p>`)}`;
+    ${tableListWrap(items, `<p class="dash-empty">No attendees yet.</p>`)}`;
 }
 
 function renderRecognized(): string {
@@ -463,16 +469,18 @@ function renderRecognized(): string {
   return `
     ${panelHead("Recognised People", "Lifetime Achievement and Young Scientist honorees.", "+ Add person")}
     ${membersCsvBar("recognized")}
-    ${membersTableWrap(items, `<p class="dash-empty">No recognised people yet.</p>`)}`;
+    ${tableListWrap(items, `<p class="dash-empty">No recognised people yet.</p>`)}`;
 }
 
 function renderBlog(): string {
   const items = content.blogPosts
-    .map((item, i) => listRow(item.title, `${item.tag} · ${item.date} · ${item.slug}`, i, true))
+    .map((item, i) =>
+      listRow(item.title, `${item.tag} · ${item.date} · ${item.slug}`, i, true, { table: true }),
+    )
     .join("");
   return `
     ${panelHead("Blog Posts", "Write posts like a document. Simple formatting toolbar — headings, lists, links, and images.", "+ Add post")}
-    <div class="dash-list">${items}</div>`;
+    ${tableListWrap(items, `<p class="dash-empty">No blog posts yet.</p>`, ["Title", "Tag, date & slug", "Actions"])}`;
 }
 
 function renderGallery(): string {
@@ -480,12 +488,13 @@ function renderGallery(): string {
     .map((item, i) =>
       listRow(item.title || "Untitled", item.image ? "Image set" : "No image", i, true, {
         thumb: item.image || undefined,
+        table: true,
       }),
     )
     .join("");
   return `
     ${panelHead("Gallery", "Photos on the Gallery page. Upload an image and set a title. Files go to the Supabase gallery bucket when signed in.", "+ Add image")}
-    <div class="dash-list">${items || `<p class="dash-empty">No gallery images yet.</p>`}</div>`;
+    ${tableListWrap(items, `<p class="dash-empty">No gallery images yet.</p>`, ["Image", "Status", "Actions"])}`;
 }
 
 function renderHeroImages(): string {
@@ -493,6 +502,7 @@ function renderHeroImages(): string {
     .map((item, i) =>
       listRow(item.title || `Image ${i + 1}`, item.image ? "Shown on home hero row" : "No image", i, true, {
         thumb: item.image || undefined,
+        table: true,
       }),
     )
     .join("");
@@ -502,7 +512,11 @@ function renderHeroImages(): string {
       "Linear image row under the home announcement. Uses gallery photos when empty. Reorder with ↑↓.",
       "+ Add image",
     )}
-    <div class="dash-list">${items || `<p class="dash-empty">No hero images yet. Add photos for the home announcement strip.</p>`}</div>`;
+    ${tableListWrap(
+      items,
+      `<p class="dash-empty">No hero images yet. Add photos for the home announcement strip.</p>`,
+      ["Image", "Status", "Actions"],
+    )}`;
 }
 
 function renderRegSettings(): string {
@@ -511,9 +525,11 @@ function renderRegSettings(): string {
   const pay = r.razorpayUrl ? "Razorpay link set" : "Razorpay link not set yet";
   return `
     ${panelHead("Registration Settings", "Dedicated registration page (/registration.html). Add Razorpay payment URL when ready.")}
-    <div class="dash-list">
-      ${listRow(r.title || "Symposium Registration", `${status} · ${pay} · ${r.dates}`, 0, false)}
-    </div>`;
+    ${tableListWrap(
+      listRow(r.title || "Symposium Registration", `${status} · ${pay} · ${r.dates}`, 0, false, { table: true }),
+      undefined,
+      ["Title", "Status", "Actions"],
+    )}`;
 }
 
 let regFilter: "all" | "abstracts" | "no-abstract" = "all";
@@ -578,11 +594,11 @@ function renderRegEntries(): string {
             `${pay}${abs} · ${item.category} · ${item.email} · ${formatSubmittedAt(item.submittedAt)}`,
             i,
             false,
-            { editLabel: "View", canDelete: true },
+            { editLabel: "View", canDelete: true, table: true },
           );
         })
         .join("")
-    : `<p class="dash-empty">No registrations in this filter.</p>`;
+    : "";
 
   return `
     ${panelHead("Registrations", `Form submissions (${all.length}). ${withAbstract.length} with abstract. Filter by abstract, year, or month; download receipts from View.`)}
@@ -609,7 +625,7 @@ function renderRegEntries(): string {
       </label>
       <p class="dash-date-filters__count">${filtered.length} shown</p>
     </div>
-    <div class="dash-list">${rows}</div>`;
+    ${tableListWrap(rows, `<p class="dash-empty">No registrations in this filter.</p>`, ["Name", "Payment & details", "Actions"])}`;
 }
 
 function renderContactInbox(): string {
@@ -622,14 +638,14 @@ function renderContactInbox(): string {
             `${item.email} · ${formatSubmittedAt(item.submittedAt)}`,
             i,
             false,
-            { editLabel: "View", canDelete: true },
+            { editLabel: "View", canDelete: true, table: true },
           ),
         )
         .join("")
-    : `<p class="dash-empty">No contact messages yet.</p>`;
+    : "";
   return `
     ${panelHead("Contact Messages", `Submissions from the Contact Us form (${items.length}).`)}
-    <div class="dash-list">${rows}</div>`;
+    ${tableListWrap(rows, `<p class="dash-empty">No contact messages yet.</p>`, ["Name", "Email & date", "Actions"])}`;
 }
 
 function renderPanel(): void {

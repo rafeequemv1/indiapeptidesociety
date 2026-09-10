@@ -4,6 +4,13 @@
   color: #1f2937;
 }
 
+#dash-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
 .dash-shell-bar {
   display: flex;
   align-items: center;
@@ -233,9 +240,11 @@
   display: grid;
   grid-template-columns: 13.5rem minmax(0, 1fr);
   gap: 0;
+  flex: 1;
+  min-height: 0;
   max-width: none;
   margin: 0;
-  min-height: calc(100vh - 3.1rem);
+  overflow: hidden;
 }
 
 .dashboard-sidebar {
@@ -243,6 +252,8 @@
   color: #fff;
   padding: 1rem 0.75rem 1.5rem;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .dashboard-sidebar__title {
@@ -332,8 +343,11 @@
 /* Main content */
 .dashboard-main {
   min-width: 0;
+  min-height: 0;
   padding: 1.15rem 1.35rem 2rem;
   background: #f3f4f2;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .dashboard-main__breadcrumb {
@@ -524,6 +538,25 @@
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--ips-navy);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-row__name-with-thumb {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.dash-row__name-with-thumb .dash-row__thumb {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.dash-row__name-with-thumb > span:last-child {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1114,9 +1147,24 @@
 }
 
 @media (max-width: 768px) {
+  #dash-app {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
   .dashboard-layout {
     grid-template-columns: 1fr;
     min-height: auto;
+    overflow: visible;
+  }
+
+  .dashboard-main {
+    overflow: visible;
+  }
+
+  .dashboard-sidebar {
+    overflow: visible;
   }
 
   .dashboard-sidebar {
