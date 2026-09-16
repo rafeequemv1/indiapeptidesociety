@@ -88,16 +88,21 @@ function initChromeAutoHide(): void {
     ticking = false;
     const y = window.scrollY;
     const delta = y - lastY;
+    const wasAway = chrome.classList.contains("is-header-away");
 
     if (y <= alwaysShowBelow) {
-      chrome.classList.remove("is-scrolled-away");
+      chrome.classList.remove("is-header-away");
     } else if (delta > deltaThreshold) {
-      chrome.classList.add("is-scrolled-away");
+      chrome.classList.add("is-header-away");
     } else if (delta < -deltaThreshold) {
-      chrome.classList.remove("is-scrolled-away");
+      chrome.classList.remove("is-header-away");
     }
 
     lastY = y;
+    if (wasAway !== chrome.classList.contains("is-header-away")) {
+      window.setTimeout(syncChromeHeight, 280);
+      syncChromeHeight();
+    }
   };
 
   window.addEventListener(
@@ -110,7 +115,8 @@ function initChromeAutoHide(): void {
     { passive: true },
   );
 
-  chrome.classList.remove("is-scrolled-away");
+  chrome.classList.remove("is-header-away");
+  syncChromeHeight();
 }
 
 function setActiveTab(id: SectionId): void {
@@ -125,8 +131,6 @@ function setActiveTab(id: SectionId): void {
 function scrollToSection(id: SectionId, pushHash = true): void {
   const el = document.getElementById(id);
   if (!el) return;
-  const chrome = document.getElementById("ips2027-chrome");
-  chrome?.classList.remove("is-scrolled-away");
   setActiveTab(id);
   if (pushHash) {
     const next = `#${id}`;
