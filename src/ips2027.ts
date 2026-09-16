@@ -75,50 +75,6 @@ function stickyScrollOffset(): number {
   return syncChromeHeight() + 8;
 }
 
-function initChromeAutoHide(): void {
-  const chrome = document.getElementById("ips2027-chrome");
-  if (!chrome) return;
-
-  let lastY = window.scrollY;
-  let ticking = false;
-  const deltaThreshold = 6;
-  const alwaysShowBelow = 72;
-
-  const apply = (): void => {
-    ticking = false;
-    const y = window.scrollY;
-    const delta = y - lastY;
-    const wasAway = chrome.classList.contains("is-header-away");
-
-    if (y <= alwaysShowBelow) {
-      chrome.classList.remove("is-header-away");
-    } else if (delta > deltaThreshold) {
-      chrome.classList.add("is-header-away");
-    } else if (delta < -deltaThreshold) {
-      chrome.classList.remove("is-header-away");
-    }
-
-    lastY = y;
-    if (wasAway !== chrome.classList.contains("is-header-away")) {
-      window.setTimeout(syncChromeHeight, 280);
-      syncChromeHeight();
-    }
-  };
-
-  window.addEventListener(
-    "scroll",
-    () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(apply);
-    },
-    { passive: true },
-  );
-
-  chrome.classList.remove("is-header-away");
-  syncChromeHeight();
-}
-
 function setActiveTab(id: SectionId): void {
   document.querySelectorAll<HTMLAnchorElement>(".ips2027-tabs__link").forEach((link) => {
     const active = link.dataset.section === id;
@@ -230,6 +186,5 @@ injectLayout("ips2027");
 initMobileMenu();
 initNewsletterForm();
 initCountdown();
-initChromeAutoHide();
 initTabs();
 void loadProgrammeImage();
