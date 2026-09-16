@@ -211,8 +211,21 @@ export function injectLayout(active: PageId): void {
   const header = document.getElementById("header-mount");
   const footer = document.getElementById("footer-mount");
 
-  if (topBar) topBar.outerHTML = renderTopBar();
-  if (header) header.outerHTML = renderHeader(active);
+  // Keep brand + main nav stuck at top on all pages except IPS 2027
+  // (IPS 2027 has its own sticky chrome + section tabs).
+  if (active !== "ips2027" && topBar && header) {
+    const chrome = document.createElement("div");
+    chrome.className = "site-chrome";
+    topBar.before(chrome);
+    chrome.appendChild(topBar);
+    chrome.appendChild(header);
+    topBar.outerHTML = renderTopBar();
+    header.outerHTML = renderHeader(active);
+  } else {
+    if (topBar) topBar.outerHTML = renderTopBar();
+    if (header) header.outerHTML = renderHeader(active);
+  }
+
   if (footer) footer.outerHTML = renderFooter({ showDashboard: false });
 
   initAuthUi();

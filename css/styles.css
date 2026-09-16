@@ -204,7 +204,20 @@ img {
   width: 100%;
 }
 
-/* ===== Top Bar â logo + title, centered ===== */
+/* ===== Sticky site chrome (brand + nav) — all pages except IPS 2027 ===== */
+.site-chrome {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #fff;
+  box-shadow: 0 1px 8px rgba(26, 39, 68, 0.06);
+}
+
+.site-chrome .header {
+  position: static;
+}
+
+/* ===== Top Bar — logo + title, centered ===== */
 .top-bar {
   border-bottom: 1px solid #e8e8e4;
   background: #fff;
