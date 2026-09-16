@@ -3840,7 +3840,19 @@ body.auth-modal-open {
   top: 0;
   z-index: 50;
   background: #fff;
-  box-shadow: 0 2px 12px rgba(26, 39, 68, 0.08);
+  box-shadow: 0 1px 8px rgba(26, 39, 68, 0.06);
+}
+
+.ips2027-site-header {
+  overflow: hidden;
+  max-height: 8rem;
+  transition: max-height 0.28s ease, opacity 0.22s ease;
+}
+
+.ips2027-chrome.is-header-away .ips2027-site-header {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .ips2027-chrome .header {
@@ -3853,13 +3865,13 @@ body.auth-modal-open {
   padding-bottom: 2.5rem;
 }
 
-/* Second sticky row under the main site header — text links, one line */
+/* White bar — text links only, single row */
 .ips2027-tabs-sticky {
   position: static;
   margin: 0;
-  background: var(--ips-orange-dark);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border-top: 1px solid #eceae4;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .ips2027-tabs-bar {
@@ -3898,14 +3910,6 @@ body.auth-modal-open {
   font-weight: 700;
   letter-spacing: 0.02em;
   white-space: nowrap;
-  background: var(--ips-yellow);
-  color: var(--ips-navy);
-  border: none;
-}
-
-.ips2027-tabs__register:hover {
-  background: var(--ips-yellow-dark);
-  color: var(--ips-navy);
 }
 
 .ips2027-tabs__link {
@@ -3913,7 +3917,7 @@ body.auth-modal-open {
   padding: 0.55rem 0;
   font-size: 0.92rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--ips-navy);
   border-radius: 0;
   white-space: nowrap;
   border: none;
@@ -3924,12 +3928,12 @@ body.auth-modal-open {
 }
 
 .ips2027-tabs__link:hover {
-  color: #fff;
+  color: var(--ips-orange);
   background: transparent;
 }
 
 .ips2027-tabs__link.is-active {
-  color: #fff;
+  color: var(--ips-orange);
   background: transparent;
   box-shadow: none;
   text-decoration: underline;
