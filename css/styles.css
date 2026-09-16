@@ -3840,6 +3840,15 @@ body.auth-modal-open {
   top: 0;
   z-index: 50;
   background: #fff;
+  transition: transform 0.28s ease, box-shadow 0.28s ease;
+  will-change: transform;
+  box-shadow: 0 2px 12px rgba(26, 39, 68, 0.08);
+}
+
+.ips2027-chrome.is-scrolled-away {
+  transform: translateY(-100%);
+  pointer-events: none;
+  box-shadow: none;
 }
 
 .ips2027-chrome .header {
@@ -3855,18 +3864,19 @@ body.auth-modal-open {
 .ips2027-tabs-sticky {
   position: static;
   margin: 0;
-  background: #fff;
-  border-top: none;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow: none;
+  background:
+    linear-gradient(180deg, #ffffff 0%, var(--ips-cream) 100%);
+  border-top: 1px solid #e8e4dc;
+  border-bottom: 2px solid var(--ips-navy);
+  box-shadow: 0 6px 18px rgba(26, 39, 68, 0.07);
 }
 
 .ips2027-tabs-bar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.5rem 0.65rem;
-  padding: 0.35rem 0;
+  gap: 0.55rem 0.85rem;
+  padding: 0.55rem 0;
 }
 
 .ips2027-tabs {
@@ -3874,7 +3884,7 @@ body.auth-modal-open {
   flex-wrap: wrap;
   justify-content: center;
   align-content: center;
-  gap: 0.2rem 0.35rem;
+  gap: 0.35rem 0.4rem;
   overflow: visible;
   padding: 0;
   min-width: 0;
@@ -3882,33 +3892,39 @@ body.auth-modal-open {
 
 .ips2027-tabs__register {
   flex-shrink: 0;
-  padding: 0.4rem 0.9rem;
-  font-size: 0.6875rem;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(196, 30, 58, 0.25);
 }
 
 .ips2027-tabs__link {
   flex: 0 0 auto;
-  padding: 0.32rem 0.65rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #6b7280;
-  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--ips-navy);
+  border-radius: 0.4rem;
   white-space: nowrap;
-  border: none;
-  background: transparent;
-  transition: color 0.15s, background 0.15s;
+  border: 1px solid #d7d2c8;
+  background: #fff;
+  transition: color 0.15s, background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
 .ips2027-tabs__link:hover {
   color: var(--ips-navy);
-  background: #f3f4f6;
+  background: #f3f0ea;
+  border-color: #c9c2b4;
 }
 
 .ips2027-tabs__link.is-active {
-  color: var(--ips-navy);
-  background: #eef1f6;
-  font-weight: 700;
+  color: #fff;
+  background: var(--ips-navy);
+  border-color: var(--ips-navy);
+  box-shadow: 0 2px 8px rgba(26, 39, 68, 0.22);
 }
 
 .ips2027-panels {

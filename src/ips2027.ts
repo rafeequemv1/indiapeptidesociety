@@ -75,6 +75,44 @@ function stickyScrollOffset(): number {
   return syncChromeHeight() + 8;
 }
 
+function initChromeAutoHide(): void {
+  const chrome = document.getElementById("ips2027-chrome");
+  if (!chrome) return;
+
+  let lastY = window.scrollY;
+  let ticking = false;
+  const deltaThreshold = 6;
+  const alwaysShowBelow = 72;
+
+  const apply = (): void => {
+    ticking = false;
+    const y = window.scrollY;
+    const delta = y - lastY;
+
+    if (y <= alwaysShowBelow) {
+      chrome.classList.remove("is-scrolled-away");
+    } else if (delta > deltaThreshold) {
+      chrome.classList.add("is-scrolled-away");
+    } else if (delta < -deltaThreshold) {
+      chrome.classList.remove("is-scrolled-away");
+    }
+
+    lastY = y;
+  };
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(apply);
+    },
+    { passive: true },
+  );
+
+  chrome.classList.remove("is-scrolled-away");
+}
+
 function setActiveTab(id: SectionId): void {
   document.querySelectorAll<HTMLAnchorElement>(".ips2027-tabs__link").forEach((link) => {
     const active = link.dataset.section === id;
@@ -87,6 +125,8 @@ function setActiveTab(id: SectionId): void {
 function scrollToSection(id: SectionId, pushHash = true): void {
   const el = document.getElementById(id);
   if (!el) return;
+  const chrome = document.getElementById("ips2027-chrome");
+  chrome?.classList.remove("is-scrolled-away");
   setActiveTab(id);
   if (pushHash) {
     const next = `#${id}`;
@@ -186,5 +226,6 @@ injectLayout("ips2027");
 initMobileMenu();
 initNewsletterForm();
 initCountdown();
+initChromeAutoHide();
 initTabs();
 void loadProgrammeImage();
