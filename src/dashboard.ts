@@ -1392,7 +1392,8 @@ async function applyModalData(data: Record<string, string>): Promise<void> {
     };
     const r = content.symposiumRegistration;
     if (r.enabled) {
-      content.announcement.ticker = `${r.title || "Indian Peptide Symposium"} will be held${r.dates ? ` from ${r.dates}` : ""}${r.venue ? ` at ${r.venue}` : ""}. Register online — stay tuned for updates!`;
+      const eventName = (r.title || "Indian Peptide Symposium").replace(/\s+registration$/i, "").trim() || "Symposium";
+      content.announcement.ticker = `${eventName} will be held${r.dates ? ` from ${r.dates}` : ""}${r.venue ? ` at ${r.venue}` : ""}. Register online — stay tuned for updates!`;
     }
     return;
   }

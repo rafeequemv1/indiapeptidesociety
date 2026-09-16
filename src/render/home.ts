@@ -2,10 +2,16 @@ import { loadContent, escapeHtml } from "../data/store";
 import { formatMembershipDisplayNo } from "../lib/registration-numbers";
 import type { SiteContent } from "../domain/types";
 
+/** Strip trailing "Registration" so ticker reads "Symposium will be held…". */
+function tickerEventName(title: string): string {
+  const cleaned = title.replace(/\s+registration$/i, "").trim();
+  return cleaned || "Symposium";
+}
+
 function buildSymposiumTicker(data: SiteContent): string {
   const reg = data.symposiumRegistration;
   if (reg.enabled && (reg.title || reg.dates || reg.venue)) {
-    const title = reg.title || "Indian Peptide Symposium";
+    const title = tickerEventName(reg.title || "Indian Peptide Symposium");
     const dates = reg.dates ? ` from ${reg.dates}` : "";
     const venue = reg.venue ? ` at ${reg.venue}` : "";
     return `${title} will be held${dates}${venue}. Register online — stay tuned for updates!`;

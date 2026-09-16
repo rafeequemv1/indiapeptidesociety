@@ -9,7 +9,7 @@ export const defaultContent: SiteContent = {
     cta: "Stay tuned for updates.",
     ctaUrl: "",
     showCtaButton: false,
-    ticker: "Symposium Registration will be held from February 25–27, 2027 at IIT Gandhinagar, Gandhinagar, Gujarat. Register online — stay tuned for updates!",
+    ticker: "Symposium will be held from February 25–27, 2027 at IIT Gandhinagar, Gandhinagar, Gujarat. Register online — stay tuned for updates!",
   },
   heroImages: [],
   news: [
